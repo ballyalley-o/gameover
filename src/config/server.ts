@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-import { GLOBAL, connectDb as db } from 'myapp'
+import { GLOBAL, dbHealthCheck } from 'hoopin'
 import express, { Application } from 'express'
 import goodlog from 'good-logs'
 import cors from 'cors'
@@ -62,11 +62,11 @@ class App {
 
   public async connectDb(): Promise<void> {
     try {
-      await db(true)
+      await dbHealthCheck(true)
     } catch (error) {
       if (error instanceof Error) {
-        goodlog.error(error.message, TAG, 'connectDb[App]')
-        db(false)
+        goodlog.error(error.message, TAG, 'dbHealthCheck[App]')
+        dbHealthCheck(false)
       }
     }
   }
