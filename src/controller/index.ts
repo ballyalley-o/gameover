@@ -1,3 +1,3 @@
-export * from './auth'
-export * from './service'
-export * from './user'
+export * from './auth.controller'
+export * from './service.controller'
+export * from './user.controller'

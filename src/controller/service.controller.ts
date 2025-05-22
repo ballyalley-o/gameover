@@ -1,24 +1,39 @@
-import { Model } from 'mongoose'
 import { Response } from 'express'
-import { GLOBAL } from 'myapp'
+import { GLOBAL } from 'hoopin'
+import argon2 from 'argon2'
+import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
+import { PrismaClient } from '@prisma/client'
 import goodlog from 'good-logs'
-import { User } from 'model'
 import { ErrorResponse } from 'middleware'
-import { CODE, KEY, RESPONSE, Resp } from 'constant'
+import { CODE, KEY, RESPONSE, Resp, oneDayFromNow } from 'constant'
 
-const TAG = 'Service'
+const prisma = new PrismaClient()
+
 export class Service {
+  public static getSignedJwtToken(userId: string) {
+    return jwt.sign({ id: userId }, GLOBAL.JWT_SECRET, { expiresIn: GLOBAL.JWT_EXP })
+  }
 
-  public static async checkExistence(
-    model       : Model<any>,
-    query       : Record<string,                         any>,
-    errorMessage: string = RESPONSE.ERROR.DOCUMENT_EXISTS,
-    errorCode   : CODE = CODE.CONFLICT
-  ): Promise<void> {
-    const record = await model.findOne(query)
-    if (record) {
-      throw new ErrorResponse(errorMessage, errorCode)
-    }
+  public static async matchPassword(hash: string, raw: string) {
+    return argon2.verify(hash, raw)
+  }
+
+  public static async hashPassword(password: string) {
+     const hashedPassword = await argon2.hash(password, {
+       type       : argon2.argon2id,
+       memoryCost : GLOBAL.HASH.MEMORY_COST,
+       timeCost   : GLOBAL.HASH.TIME_COST,
+       parallelism: GLOBAL.HASH.PARALLELISM,
+     })
+     return hashedPassword
+  }
+
+  public static async getResetPasswordToken() {
+    const resetToken = crypto.randomBytes(20).toString(GLOBAL.ENCRYPTION.ENCODING as BufferEncoding)
+    const hashed     = crypto.createHash(GLOBAL.ENCRYPTION.ALG).update(resetToken).digest(GLOBAL.ENCRYPTION.ENCODING as crypto.BinaryToTextEncoding)
+    const expires    = oneDayFromNow
+    return { resetToken, hashed, expires }
   }
 
   public static async sendTokenResponse(user: any, code: CODE, res: Response) {
@@ -55,12 +70,13 @@ export class Service {
   }
 
   public static async createUser(data: any) {
-    const newUser = await User.create(data)
+    const hashedPassword = await Service.hashPassword(data.password)
+    const newUser        = prisma.user.create({ data: { password: hashedPassword, ...data } })
     return newUser
   }
 
   public static async updateUser(userId: string, data: any) {
-    const updatedUser = await User.findByIdAndUpdate(userId, data, { new: true })
+    const updatedUser = await prisma.user.update({ where: { id: userId }, data })
     if (!updatedUser) {
       throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
     }
@@ -68,7 +84,7 @@ export class Service {
   }
 
   public static async deleteUser(userId: string) {
-    const deletedUser = await User.findByIdAndDelete(userId)
+    const deletedUser = await prisma.user.delete({ where: { id: userId }})
     if (!deletedUser) {
       throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
     }

@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
-import { User } from 'model'
+import { PrismaClient } from '@prisma/client'
 import { Service } from 'controller'
 import { CODE, Resp, RESPONSE } from 'constant'
+
+const prisma = new PrismaClient()
 
 const TAG = 'User.Controller'
 export class UserController {
@@ -15,7 +17,7 @@ export class UserController {
 
     public static async getUser(req:Request, res: Response, _next: NextFunction) {
         try {
-            const user = await User.findById(req.params.id)
+            const user = await prisma.user.findUnique({ where: { id: req.params.id }})
             res.status(CODE.OK).send(Resp.Ok(user))
         } catch (error: any) {
             Service.catchError(error, TAG, 'getUser', res)
@@ -33,8 +35,7 @@ export class UserController {
 
     public static async updateUser(req: Request, res: Response, _next: NextFunction) {
         try {
-            const userId = req.params.id
-            const updatedUser = await Service.updateUser(userId, req.body)
+            const updatedUser = await Service.updateUser(req.params.id, req.body)
             res.status(CODE.OK).send(Resp.Ok(updatedUser))
         } catch (error: any) {
             Service.catchError(error, TAG, 'updateUser', res)
@@ -43,7 +44,7 @@ export class UserController {
 
     public static async deleteUser(req: Request, res: Response, _next: NextFunction) {
         try {
-            const userId = req.params.id
+            const userId      = req.params.id
             const deletedUser = await Service.deleteUser(userId)
             res.status(CODE.OK).send(Resp.Ok(deletedUser, 0, RESPONSE.SUCCESS.DELETED))
         } catch (error: any) {
