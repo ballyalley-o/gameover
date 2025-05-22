@@ -1,50 +1,29 @@
 import { Request, Response, NextFunction } from 'express'
-import { Document, Model as MongooseModel } from 'mongoose'
-import { GLOBAL } from 'myapp'
+import { PrismaClient } from '@prisma/client'
+import { GLOBAL } from 'hoopin'
 import { Resp } from 'constant'
 
-interface Model<T extends Document> extends MongooseModel<T> {}
+const prisma = new PrismaClient()
 
-const FILTERS = ['select', 'sort', 'page', 'limit']
-export const advanceResult = (model: Model<any>, populate?: any) => async (req: Request, res: Response, next: NextFunction) => {
-    let   query    = model.find()
-    const reqQuery = { ...req.query }
+export const advanceResult = <M extends ModelName>(model: M) => async (req: Request, res: Response, next: NextFunction) => {
+    const { select, sort, page = GLOBAL.PAGINATION.DEFAULT_PAGE, limit = GLOBAL.PAGINATION.LIMIT, ...filters } = req.query
 
-    FILTERS.forEach((param) => delete reqQuery[param])
-    query = query.find(reqQuery)
+    const skip = (Number(page) - 1) * Number(limit)
+    const take = Number(limit)
 
-    if (req.query.select) {
-        const fields = (req.query.select as string).split(',').join(' ')
-        query = query.select(fields)
-    }
+    const orderBy          = sort ? Object.fromEntries((sort as String).split(',').map((field) => [field.trim(), 'asc'])) : { createdAt: 'desc' }
+    const where            = Object.fromEntries(Object.entries(filters).map(([key, val]) => [key, { equals: val }]))
+    const [results, total] = await Promise.all([ (prisma[model] as any).findMany({ where, take, skip, orderBy }), (prisma[model] as any).count({ where })])
+    const pagination: any  = {}
+    const endIndex         = skip + take
 
-    if (req.query.sort) {
-        const sortBy = (req.query.sort as string).split(',').join(' ')
-        query = query.sort(sortBy)
-    } else {
-        query = query.sort('name')
-    }
 
-    const page       = parseInt(req.query.page as any, 10) || GLOBAL.PAGINATION.DEFAULT_PAGE
-    const limit      = parseInt(req.query.limit as any, 10) || GLOBAL.PAGINATION.LIMIT
-    const startIndex = (page - 1) * limit
-    const endIndex   = page * limit
-    const total      = await model.countDocuments(reqQuery)
-          query      = query.skip(startIndex).limit(limit)
-
-    if (populate) {
-        query = query.populate(populate)
-    }
-
-    const results = await query
-
-    const pagination: IPagination = {}
     if (endIndex < total) {
-        pagination.next = { page: page + 1, limit }
+        pagination.next = { page: Number(page) + 1, limit: take }
     }
 
-    if (startIndex > 0) {
-        pagination.prev = { page: page - 1, limit }
+    if (skip > 0) {
+        pagination.prev = { page: Number(page) - 1, limit: take }
     }
 
     res.advanceResult = Resp.AdvancedResult(results, results.length, pagination)
