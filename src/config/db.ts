@@ -1,18 +1,16 @@
-import mongoose from 'mongoose'
 import { GLOBAL } from 'hoopin'
 import goodlog from 'good-logs'
-import { User } from 'model'
+import { PrismaClient } from '@prisma/client'
 
-const TAG = 'DB'
-export const connectDb = async (isConnected: boolean) => {
+const prisma = new PrismaClient()
+
+const TAG = 'DB.HealthCheck'
+export const dbHealthCheck = async (isConnected: boolean) => {
   try {
-    const db = await mongoose.connect(String(GLOBAL.DB_URI))
-    await User.syncIndexes()
-    const _host = GLOBAL.DB_HOST(db.connection)
-    const _name = GLOBAL.DB_NAME(db.connection)
-    goodlog.db(_host, _name, isConnected)
+    await prisma.$queryRaw`SELECT 1`
+    goodlog.db(GLOBAL.DB_HOST, GLOBAL.DB_NAME, isConnected)
   } catch (error: any) {
-    goodlog.error(error.message, TAG, 'connectDb')
+    goodlog.error(error.message, TAG, 'dbHealthCheck')
     process.exit()
   }
 }
