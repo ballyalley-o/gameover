@@ -17,9 +17,9 @@ export class Resp extends AbstractLogger {
 
   public static Server(_req: Request, res: Response) {
     const response = {
-      name: GLOBAL.APP_NAME,
-      status: 'Running',
-      version: GLOBAL.API_VERSION,
+      name       : GLOBAL.APP_NAME,
+      status     : 'Running',
+      version    : GLOBAL.API_VERSION,
       environment: GLOBAL.ENV,
     }
     res.send(response)
