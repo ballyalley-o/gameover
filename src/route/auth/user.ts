@@ -1,12 +1,11 @@
 import { Router } from 'express'
 import { UserController } from 'controller'
 import { advanceResult } from 'middleware'
-import { User } from 'model'
 
 const router = Router({ mergeParams: true })
 
 router.route('/')
-.get(advanceResult(User, 'email'), UserController.getUsers)
+.get(advanceResult('user'), UserController.getUsers)
 .post(UserController.createUser)
 
 router.route('/:id')
