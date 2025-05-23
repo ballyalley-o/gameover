@@ -12,12 +12,12 @@ export const GLOBAL = {
     NAME: process.env.COOKIE_NAME || '',
     EXP :  new Date(Date.now() + 24 * 60 * 60 * 1000),
   },
-  DB_URI    : process.env.DB_URI || '',
-  DB_NAME   : (con: { name: string }) => con.name || 'sampleapp',
-  DB_HOST   : (con: { host: string }) => con.host || '',
+  DB_URI    : `${process.env.DB_PROTOCOL}://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}/${process.env.DB_NAME}?sslmode=require` || '',
+  DB_NAME   : process.env.DB_NAME || 'hoopin-db',
+  DB_HOST   : process.env.DB_HOST || '',
   ENCRYPTION: {
     ENCODING: process.env.ENCRYPTION_ENCODING || '',
-    ALG: process.env.ENCRYPTION_ALG || '',
+    ALG     : process.env.ENCRYPTION_ALG || '',
   },
   HASH   : {
   TYPE       : process.env.HASH_TYPE || 'argon2id',
