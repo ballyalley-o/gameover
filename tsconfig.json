@@ -1,35 +1,35 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
-    "lib": ["dom", "dom.iterable", "ESNext"],
-    "target": "ESNext",
-    "module": "ESNext",
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "baseUrl": "./src",
-    "paths": {
-      "*": ["*"],
+    "lib"             : ["dom", "dom.iterable", "ESNext"],
+    "target"          : "ESNext",
+    "module"          : "ESNext",
+    "outDir"          : "./dist",
+    "rootDir"         : "./src",
+    "baseUrl"         : "./src",
+    "paths"           : {
+      "*"     : ["*"],
       "hoopin": ["config/index.ts"],
-      "route": ["route/index.ts"]
+      "route" : ["route/index.ts"]
     },
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "noResolve": false,
-    "skipLibCheck": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators"          : true,
+    "emitDecoratorMetadata"           : true,
+    "noResolve"                       : false,
+    "skipLibCheck"                    : true,
+    "jsx"                             : "preserve",
+    "incremental"                     : true,
+    "esModuleInterop"                 : true,
+    "resolveJsonModule"               : true,
+    "allowSyntheticDefaultImports"    : true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "types": ["node"]
+    "strict"                          : true,
+    "types"                           : ["node"]
   },
   "tsc-alias": {
-    "verbose": false,
+    "verbose"         : false,
     "resolveFullPaths": true,
-    "fileExtensions": {
-      "inputGlob": "{js,jsx,mjs}",
+    "fileExtensions"  : {
+      "inputGlob"  : "{js,jsx,mjs}",
       "outputCheck": ["js", "json", "jsx", "mjs"]
     }
   },
