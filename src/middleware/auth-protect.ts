@@ -1,7 +1,8 @@
-import { GLOBAL } from 'hoopin'
+import { GLOBAL, db } from 'hoopin'
 import { Response, NextFunction  } from 'express'
+import { eq } from 'drizzle-orm'
 import jwt from 'jsonwebtoken'
-import { User } from 'model'
+import { users } from '../db/schema'
 import { asyncHandler, ErrorResponse } from 'middleware'
 import { CODE, KEY, RESPONSE } from 'constant'
 
@@ -21,7 +22,13 @@ export const protect = asyncHandler(async (req, _res, next) => {
 
     try {
         const decoded  = jwt.verify(token, GLOBAL.JWT_SECRET as string) as DecodedToken
-              req.user = await User.findById(decoded.id).select(KEY.REMOVE_PASSWORD)
+        const [user]   = await db.select().from(users).where(eq(users.id, decoded.id))
+
+        if (!user) {
+          return next(new ErrorResponse(RESPONSE.ERROR[401], CODE.UNAUTHORIZED))
+        }
+
+        req.user = { id: user.id, role: user.role }
         next()
     } catch (error: any) {
         return next(error)
