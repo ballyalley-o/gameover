@@ -1,11 +1,12 @@
 import { Router } from 'express'
 import { UserController } from 'controller'
 import { advanceResult } from 'middleware'
+import { users } from '../../db/schema'
 
 const router = Router({ mergeParams: true })
 
 router.route('/')
-.get(advanceResult('user'), UserController.getUsers)
+.get(advanceResult(users), UserController.getUsers)
 .post(UserController.createUser)
 
 router.route('/:id')
