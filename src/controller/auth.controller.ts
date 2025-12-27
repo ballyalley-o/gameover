@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express'
-import { GLOBAL } from 'hoopin'
+import { eq } from 'drizzle-orm'
+import { GLOBAL, db } from 'hoopin'
+import bcrypt from 'bcryptjs'
 import { Service } from 'controller'
-import { PrismaClient } from '@prisma/client'
 import { CODE, fiveSecFromNow, Resp, RESPONSE } from 'constant'
-
-const prisma = new PrismaClient()
+import { users } from '../db/schema'
 
 const TAG = 'Auth.Controller'
 export class AuthController {
@@ -13,8 +13,10 @@ export class AuthController {
             const { email, password }  = req.body
 
             if (!email || !password) Service.invalid()
-            const user    = await prisma.user.findUnique({ where: { email } }) || Service.invalid()
-            const isMatch = await Service.matchPassword(user.password || '', password)
+            const [user]  = await db.select().from(users).where(eq(users.email, email))
+
+            if (!user) Service.invalid()
+            const isMatch = await bcrypt.compare(password, user.password || '')
 
             if (!isMatch) Service.invalid()
 
@@ -27,11 +29,11 @@ export class AuthController {
     public static async signUp(req: Request, res: Response, _next: NextFunction) {
         try {
             const { email }  = req.body
-            const userExists = await prisma.user.findUnique({ where: { email }})
+            const [userExists] = await db.select({ id: users.id }).from(users).where(eq(users.email, email))
 
             if (userExists) Service.alreadyExist(email)
-            const hashedPassword = await Service.hashPassword(req.body.password)
-            const newUser        = await prisma.user.create({ data: { ...req.body, password: hashedPassword }})
+            const hashedPassword = await bcrypt.hash(req.body.password, GLOBAL.HASH.SALT_ROUNDS)
+            const [newUser]      = await db.insert(users).values({ ...req.body, password: hashedPassword }).returning()
             await Service.sendTokenResponse(newUser, CODE.CREATED, res)
         } catch (error: any) {
             Service.catchError(error, TAG, 'signUp', res)
@@ -56,7 +58,8 @@ export class AuthController {
             if (!req.user?.id) {
                 return Service.invalid(RESPONSE.ERROR[401], CODE.UNAUTHORIZED)
             }
-            const user = await prisma.user.findUnique({ where: { id: req.body.id }}) || Service.notFound()
+            const [user] = await db.select().from(users).where(eq(users.id, req.user.id))
+            if (!user) Service.notFound()
             res.status(CODE.OK).send(Resp.Ok(user))
         } catch (error: any) {
             Service.catchError(error, TAG, 'myAccount', res)
@@ -65,7 +68,8 @@ export class AuthController {
 
     public static async updateAccount(req: Request, res: Response, _next: NextFunction) {
         try {
-            const updatedUser = await prisma.user.update({ where: { id: req.user.id }, data: req.body })|| Service.notFound()
+            const [updatedUser] = await db.update(users).set(req.body).where(eq(users.id, req.user.id)).returning()
+            if (!updatedUser) Service.notFound()
             res.status(CODE.OK).send(Resp.Ok(updatedUser))
         } catch (error: any) {
             Service.catchError(error, TAG, 'updateAccount', res)
