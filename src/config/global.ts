@@ -20,10 +20,11 @@ export const GLOBAL = {
     ALG     : process.env.ENCRYPTION_ALG || '',
   },
   HASH   : {
-  TYPE       : process.env.HASH_TYPE || 'argon2id',
-  MEMORY_COST: parseInt(process.env.HASH_MEMORY_COST || '19456', 10),
-  TIME_COST  : parseInt(process.env.HASH_TIME_COST || '2', 10),
-  PARALLELISM: parseInt(process.env.HASH_PARALLELISM || '1', 10),
+    MEMORY_COST: parseInt(process.env.HASH_MEMORY_COST || '19456', 10),
+    PARALLELISM: parseInt(process.env.HASH_PARALLELISM || '1', 10),
+    SALT_ROUNDS: Number(process.env.SALT_ROUNDS) || 10,
+    TIME_COST  : parseInt(process.env.HASH_TIME_COST || '2', 10),
+    TYPE       : process.env.HASH_TYPE || 'argon2id',
   },
   RATE_LIMIT: {
     windowMs: 10 * 60 * 1000,
