@@ -1,31 +1,52 @@
 import { Request, Response, NextFunction } from 'express'
-import { PrismaClient } from '@prisma/client'
-import { GLOBAL } from 'hoopin'
+import { and, asc, desc, eq, sql } from 'drizzle-orm'
+import { AnyPgTable } from 'drizzle-orm/pg-core'
+import { GLOBAL, db } from 'hoopin'
 import { Resp } from 'constant'
 
-const prisma = new PrismaClient()
+const defaultSort = (table: AnyPgTable) => {
+  const createdAt = (table as any).createdAt
+  return createdAt ? [desc(createdAt)] : []
+}
 
-export const advanceResult = <M extends ModelName>(model: M) => async (req: Request, res: Response, next: NextFunction) => {
-    const { select, sort, page = GLOBAL.PAGINATION.DEFAULT_PAGE, limit = GLOBAL.PAGINATION.LIMIT, ...filters } = req.query
+export const advanceResult = <T extends AnyPgTable>(table: T) => async (req: Request, res: Response, next: NextFunction) => {
+  const { sort, page = GLOBAL.PAGINATION.DEFAULT_PAGE, limit = GLOBAL.PAGINATION.LIMIT, ...filters } = req.query
 
-    const skip = (Number(page) - 1) * Number(limit)
-    const take = Number(limit)
+  const offset = (Number(page) - 1) * Number(limit)
+  const take   = Number(limit)
 
-    const orderBy          = sort ? Object.fromEntries((sort as String).split(',').map((field) => [field.trim(), 'asc'])) : { createdAt: 'desc' }
-    const where            = Object.fromEntries(Object.entries(filters).map(([key, val]) => [key, { equals: val }]))
-    const [results, total] = await Promise.all([ (prisma[model] as any).findMany({ where, take, skip, orderBy }), (prisma[model] as any).count({ where })])
-    const pagination: any  = {}
-    const endIndex         = skip + take
+  const whereClauses = Object.entries(filters)
+    .filter(([key]) => Object.hasOwn((table as any).columns, key))
+    .map(([key, value]) => eq((table as any)[key], value as string))
 
+  const where = whereClauses.length ? and(...whereClauses) : undefined
 
-    if (endIndex < total) {
-        pagination.next = { page: Number(page) + 1, limit: take }
-    }
+  const orderBy =
+    sort
+      ? (sort as string)
+        .split(',')
+        .map((field) => field.trim())
+        .filter(Boolean)
+        .map((field) => field.startsWith('-') ? desc((table as any)[field.slice(1)]) : asc((table as any)[field]))
+      : defaultSort(table)
 
-    if (skip > 0) {
-        pagination.prev = { page: Number(page) - 1, limit: take }
-    }
+  const [results, totalResult] = await Promise.all([
+    db.select().from(table).where(where).orderBy(...orderBy).limit(take).offset(offset),
+    db.select({ count: sql<number>`count(*)` }).from(table).where(where),
+  ])
 
-    res.advanceResult = Resp.AdvancedResult(results, results.length, pagination)
-    next()
+  const total    = Number(totalResult?.[0]?.count ?? 0)
+  const pagination: any = {}
+  const endIndex = offset + take
+
+  if (endIndex < total) {
+    pagination.next = { page: Number(page) + 1, limit: take }
+  }
+
+  if (offset > 0) {
+    pagination.prev = { page: Number(page) - 1, limit: take }
+  }
+
+  res.advanceResult = Resp.AdvancedResult(results, results.length, pagination)
+  next()
 }
