@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { AnyPgTable } from 'drizzle-orm/pg-core'
-import { GLOBAL, db } from 'hoopin'
+import { GLOBAL, db } from 'gameover'
 import { Resp } from 'constant'
 
 const defaultSort = (table: AnyPgTable) => {
