@@ -1,7 +1,7 @@
 ---
 name: Default Issue Template
 about: Create a report to help us improve
-title: 'hoopin [Default]:'
+title: 'gameover [Default]:'
 labels:
 assignees: ''
 ---

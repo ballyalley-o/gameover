@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: 'hoopin [Feat]: '
+title: 'gameover [Feat]: '
 labels: feat
 assignees: ''
 ---
