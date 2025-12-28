@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { eq } from 'drizzle-orm'
-import { db } from 'hoopin'
+import { db } from 'gameover'
 import { Service } from 'controller'
 import { CODE, Resp, RESPONSE } from 'constant'
 import { users } from '../db/schema'

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { eq } from 'drizzle-orm'
-import { GLOBAL, db } from 'hoopin'
+import { GLOBAL, db } from 'gameover'
 import bcrypt from 'bcryptjs'
 import { Service } from 'controller'
 import { CODE, fiveSecFromNow, Resp, RESPONSE } from 'constant'
