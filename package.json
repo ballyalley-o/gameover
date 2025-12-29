@@ -1,7 +1,7 @@
 {
-  "name": "node-express",
+  "name": "gameover",
   "version": "1.0.0",
-  "description": "Training building a high performing, beautifully designed NodeJs/TS Express app",
+  "description": "gameover app",
   "main": "app.js",
   "type": "module",
   "scripts": {
