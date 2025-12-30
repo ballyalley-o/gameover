@@ -147,10 +147,3 @@ export const gameEvents = pgTable('game_events', {
 }, (table) => ({
   gameIdx: index('idx_game_events_game').on(table.gameId),
 }))
-
-export type DrizzleUser      = typeof users.$inferSelect
-export type NewDrizzleUser   = typeof users.$inferInsert
-export type DrizzlePlayer    = typeof players.$inferSelect
-export type NewDrizzlePlayer = typeof players.$inferInsert
-export type DrizzleTeam      = typeof teams.$inferSelect
-export type NewDrizzleTeam   = typeof teams.$inferInsert
