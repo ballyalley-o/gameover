@@ -10,7 +10,7 @@ router.route('/:id')
   .get(LineupController.get)
   .put(LineupController.update)
 
-router.route('/:id/metrics')
+router.route('/:id/metric')
   .post(LineupController.computeMetrics)
 
 export default router
