@@ -39,4 +39,7 @@ export const GLOBAL = {
   },
   JWT_EXP   : 24 * 60 * 60 * 1000,
   JWT_SECRET: process.env.JWT_SECRET || '',
+  SALARY: {
+    CAP_DEFAULT: Number(process.env.SALARY_CAP_DEFAULT) || 0
+  }
 }
