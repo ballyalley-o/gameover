@@ -20,7 +20,7 @@ export class Resp extends AbstractLogger {
       name       : GLOBAL.APP_NAME,
       status     : 'Running',
       version    : GLOBAL.API_VERSION,
-      environment: GLOBAL.ENV,
+      environment: GLOBAL.STAGE,
     }
     res.send(response)
   }
