@@ -19,9 +19,9 @@ import { PATH_DIR } from './dir'
 const TAG = 'App'
 
 class App {
-  private _app: Application
-  private _env: string = GLOBAL.ENV
-  isConnected: boolean = false
+  private _app       : Application
+  private _env       : string = GLOBAL.STAGE
+          isConnected: boolean = false
 
   public static globalConfig = GLOBAL
 
