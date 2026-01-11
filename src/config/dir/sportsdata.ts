@@ -1,10 +1,11 @@
 import { GLOBAL } from 'config/global'
+import { SSM_GET } from 'config/ssm.global'
 import type { TeamAbbrNBA } from 'constant'
 import { combineURL } from 'utility'
 
 const API_URL    = GLOBAL.SPORTSDATA_URL ?? ''
-const API_KEY    = GLOBAL.SPORTSDATA_APIKEY
-const API_HEADER = GLOBAL.SPORTSDATA_HEADER || 'Ocp-Apim-Subscription-Key'
+const API_KEY    = await SSM_GET.SPORTSDATA_APIKEY || ''
+const API_HEADER = await SSM_GET.SPORTSDATA_AUTH_HEADER || ''
 
 const _LEAGUE_NBA = 'nba'
 
