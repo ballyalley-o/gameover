@@ -15,11 +15,7 @@ export const logger = winston.createLogger({
     ]
 })
 
-if (GLOBAL.ENV === KEY.PRODUCTION) {
-    logger.add(
-        new winston.transports.File({ filename: 'log/error.log', level: 'error' })
-    )
-    logger.add(
-        new winston.transports.File({ filename: 'log/combined.log' })
-    )
+if (GLOBAL.STAGE === KEY.PRODUCTION) {
+  logger.add(new winston.transports.File({ filename: 'log/error.log', level: 'error' }))
+  logger.add(new winston.transports.File({ filename: 'log/combined.log' }))
 }
