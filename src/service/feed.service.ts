@@ -72,6 +72,13 @@ export const feedService = {
     return data
   },
 
+  // Stats
+  async getPlayerStatsBySeasonAndPlayerId(season: string, playerId: string) {
+    const url      = SPORTSDATA_DIR.PLAYER_SEASONSTATS_BY_PLAYER(season, playerId)
+    const { data } = await _axiosGET(url)
+    return data
+  },
+
   async getScheduleAll(season: string) {
     const url      = SPORTSDATA_DIR.SCHEDULES(season)
     const { data } = await _axiosGET(url)
