@@ -3,7 +3,7 @@ dotenv.config()
 
 export const GLOBAL = {
   APP_NAME         : process.env.APP_NAME || 'gameover',
-  ENV              : process.env.ENV || 'development',
+  STAGE            : process.env.STAGE || 'development',
   PORT             : process.env.PORT || 3007,
   API_URL          : process.env.API_URL || '',
   API_VERSION      : process.env.API_VERSION || 'v1',
@@ -21,6 +21,9 @@ export const GLOBAL = {
   ENCRYPTION: {
     ENCODING: process.env.ENCRYPTION_ENCODING || '',
     ALG     : process.env.ENCRYPTION_ALG || '',
+  },
+  AWS: {
+    REGION: process.env.AWS_REGION || 'ap-southeast-2'
   },
   HASH   : {
     MEMORY_COST: parseInt(process.env.HASH_MEMORY_COST || '19456', 10),
