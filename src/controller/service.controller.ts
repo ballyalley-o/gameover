@@ -44,7 +44,7 @@ export class Service {
       secure  : false
     }
 
-    if (GLOBAL.ENV === KEY.PRODUCTION) {
+    if (GLOBAL.STAGE === KEY.PRODUCTION) {
       options.secure = true
     }
 
