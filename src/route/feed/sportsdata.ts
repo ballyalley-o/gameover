@@ -8,6 +8,7 @@ router.get('/player-active-all', protect, FeedController.getPlayerActiveAll)
 router.get('/player-detail-all', protect, FeedController.getPlayerDetailAll)
 router.get('/player-injured-all', protect, FeedController.getInjuredPlayerAll)
 router.get('/player-all-by-team', protect, FeedController.getPlayerAllByTeam)
+router.get('/player-stats', protect, FeedController.getPlayerStatsBySeasonAndPlayerId)
 
 router.get('/team-all', protect, FeedController.getTeamAll)
 router.get('/team-active-all', protect, FeedController.getTeamActiveAll)
