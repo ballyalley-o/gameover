@@ -1,8 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
-import { CODE, Resp, TEAM_ABBR_NBA } from 'constant'
+import { eq } from 'drizzle-orm'
 import { feedService } from 'service/feed.service'
+import { getDrizzleDbClient } from 'db/client'
+import { players } from 'db/schema'
 import type { TeamAbbrNBA } from 'constant'
+import { CODE, Resp, TEAM_ABBR_NBA } from 'constant'
 import { transl } from 'utility'
+
 import { Service } from './service.controller'
 
 const TAG = 'Feed.Controller'
@@ -11,6 +15,7 @@ export class FeedController {
     public static async getPlayerActiveAll(_req: Request, res: Response, _next: NextFunction): Promise<void> {
         try {
             const players = await feedService.getPlayerActiveAll()
+
             res.status(CODE.OK).json(Resp.Ok(players, Array.isArray(players) ? players.length : undefined))
         } catch (error) {
             Service.catchError(error, TAG, 'getPlayerActiveAll', res)
@@ -37,6 +42,32 @@ export class FeedController {
             res.status(CODE.OK).json(Resp.Ok(players, Array.isArray(players) ? players.length : undefined))
         } catch (error) {
             Service.catchError(error, TAG, 'getPlayerAllByTeam', res)
+        }
+    }
+
+    public static async getPlayerStatsBySeasonAndPlayerId(req: Request, res: Response, _next: NextFunction): Promise<void> {
+        try {
+            const { season, playerId } = req.query
+
+            const seasonStr   = typeof season   === 'string' ? season : Array.isArray(season) ? String(season[0] ?? '') : ''
+            const playerIdStr = typeof playerId === 'string' ? playerId : Array.isArray(playerId) ? String(playerId[0] ?? '') : ''
+
+            if (!seasonStr || !playerIdStr) {
+              res.status(CODE.BAD_REQUEST).json(Resp.Error('Invalid request: date or playerId not provided', CODE.BAD_REQUEST))
+              return
+            }
+            const db       = await getDrizzleDbClient()
+            const dbPlayer = await db.select().from(players).where(eq(players.playerId, playerIdStr)).limit(1)
+
+            if (!dbPlayer || !Array.isArray(dbPlayer) || dbPlayer.length <= 0) {
+                res.status(CODE.NOT_FOUND).json(Resp.Error('Not found: Player not found', CODE.NOT_FOUND))
+                return
+            }
+
+            const stats = await feedService.getPlayerStatsBySeasonAndPlayerId(String(season), String(playerId))
+            res.status(CODE.OK).json(Resp.Ok(stats, Array.isArray(stats) ? stats.length : undefined))
+        } catch (error) {
+            Service.catchError(error, TAG, 'getPlayerStatsBySeasonAndPlayerId', res)
         }
     }
 
