@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
-import { and, asc, desc, eq, sql } from 'drizzle-orm'
-import { AnyPgTable } from 'drizzle-orm/pg-core'
+import { and, asc, desc, eq, sql, TableConfig } from 'drizzle-orm'
+import { AnyPgTable, PgTable } from 'drizzle-orm/pg-core'
 import { GLOBAL, db } from 'gameover'
 import { Resp } from 'constant'
 
@@ -9,7 +9,7 @@ const defaultSort = (table: AnyPgTable) => {
   return createdAt ? [desc(createdAt)] : []
 }
 
-export const advanceResult = <T extends AnyPgTable>(table: T) => async (req: Request, res: Response, next: NextFunction) => {
+export const advanceResult = (table: PgTable<TableConfig>) => async (req: Request, res: Response, next: NextFunction) => {
   const { sort, page = GLOBAL.PAGINATION.DEFAULT_PAGE, limit = GLOBAL.PAGINATION.LIMIT, ...filters } = req.query
 
   const offset = (Number(page) - 1) * Number(limit)
