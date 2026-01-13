@@ -71,6 +71,13 @@
       "when": 1768044931858,
       "tag": "0009_updated-playerId-to-varchar",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1768317109542,
+      "tag": "0010_updated-team-schema",
+      "breakpoints": true
     }
   ]
 }
