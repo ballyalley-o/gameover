@@ -6,6 +6,9 @@ const router = Router({ mergeParams: true })
 router.route('/')
   .get(TeamController.list)
   .post(TeamController.create)
+  .delete(TeamController.deleteTeam)
+
+router.post('/create-basic', TeamController.createBasic)
 
 router.route('/:id')
   .get(TeamController.get)

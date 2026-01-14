@@ -9,8 +9,8 @@ import tradeRoute from './trade'
 
 const router = Router({ mergeParams: true })
 
-export const linkGameRoute = (app: Application, apiVer: string) => {
-  const base = combine(apiVer, MODULE.GAME)
+export const linkNBARoute = (app: Application, apiVer: string) => {
+  const base = combine(apiVer, MODULE.NBA)
   router.use(combine(base, 'player'), playerRoute)
   router.use(combine(base, 'team'), teamRoute)
   router.use(combine(base, 'lineup'), lineupRoute)
