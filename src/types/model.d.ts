@@ -24,3 +24,5 @@ declare interface IUser {
   password                               : string
   role                                   : Role
 }
+
+declare type PasswordStrengthType = 'weak' | 'medium' | 'strong'
