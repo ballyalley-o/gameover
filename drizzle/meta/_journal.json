@@ -78,6 +78,13 @@
       "when": 1768317109542,
       "tag": "0010_updated-team-schema",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1768379679138,
+      "tag": "0011_updated-player-firstname-lastname",
+      "breakpoints": true
     }
   ]
 }
