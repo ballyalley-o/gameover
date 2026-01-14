@@ -12,4 +12,9 @@ export class TradeController {
     const result = await tradeService.execute(req.body)
     res.status(CODE.CREATED).send(Resp.Created(result))
   }
+
+  static async suggest(req: Request, res: Response) {
+    const suggestions = await tradeService.suggest(req.body)
+    res.status(CODE.OK).send(Resp.Ok(suggestions, suggestions.length))
+  }
 }
