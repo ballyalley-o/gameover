@@ -8,7 +8,8 @@ import bcrypt from 'bcryptjs'
 import { GLOBAL, db } from 'gameover'
 import { users } from '../db/schema'
 import { ErrorResponse } from 'middleware'
-import { CODE, KEY, RESPONSE, Resp, oneDayFromNow } from 'constant'
+import { CODE, KEY, REGEX, RESPONSE, Resp, oneDayFromNow } from 'constant'
+import { transl } from 'utility'
 
 export class Service {
   public static getSignedJwtToken(userId: string) {
@@ -77,6 +78,21 @@ export class Service {
 
     if (!data.password) {
       throw new ErrorResponse(RESPONSE.ERROR.INVALID_CREDENTIALS, CODE.BAD_REQUEST)
+    }
+
+    /**
+     * Password Requirements:
+        - Minimum of 8 characters
+        - At least one uppercase letter (A–Z)
+        - At least one lowercase letter (a–z)
+        - At least one number (0–9)
+        - At least one special character (e.g., !, @, #, $)
+     */
+    const dataPassword    = String(data.password)
+    const PASSWORD_REGEX = new RegExp(REGEX.PASSWORD)
+
+    if (!PASSWORD_REGEX.test(dataPassword)) {
+      throw new Error(transl('validation.password'))
     }
 
     const hashedPassword = await bcrypt.hash(data.password, GLOBAL.HASH.SALT_ROUNDS)
