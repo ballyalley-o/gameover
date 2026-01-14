@@ -3,7 +3,9 @@ import { eq } from 'drizzle-orm'
 import { GLOBAL, db } from 'gameover'
 import bcrypt from 'bcryptjs'
 import { Service } from 'controller'
-import { CODE, fiveSecFromNow, Resp, RESPONSE } from 'constant'
+import { ErrorResponse } from 'middleware'
+import { CODE, fiveSecFromNow, REGEX, Resp, RESPONSE } from 'constant'
+import { transl } from 'utility'
 import { users } from '../db/schema'
 
 const TAG = 'Auth.Controller'
@@ -28,10 +30,28 @@ export class AuthController {
 
     public static async signUp(req: Request, res: Response, _next: NextFunction) {
         try {
-            const { email }  = req.body
+            const { email }    = req.body
             const [userExists] = await db.select({ id: users.id }).from(users).where(eq(users.email, email))
 
             if (userExists) Service.alreadyExist(email)
+            if (!req.body.password) {
+                throw new ErrorResponse(RESPONSE.ERROR.INVALID_CREDENTIALS, CODE.BAD_REQUEST)
+            }
+            /**
+             * Password Requirements:
+                - Minimum of 8 characters
+                - At least one uppercase letter (A–Z)
+                - At least one lowercase letter (a–z)
+                - At least one number (0–9)
+                - At least one special character (e.g., !, @, #, $)
+                */
+            const dataPassword   = String(req.body.password)
+            const PASSWORD_REGEX = new RegExp(REGEX.PASSWORD)
+
+            if (!PASSWORD_REGEX.test(dataPassword)) {
+                throw new Error(transl('validation.password'))
+            }
+
             const hashedPassword = await bcrypt.hash(req.body.password, GLOBAL.HASH.SALT_ROUNDS)
             const [newUser]      = await db.insert(users).values({ ...req.body, password: hashedPassword }).returning()
             await Service.sendTokenResponse(newUser, CODE.CREATED, res)
