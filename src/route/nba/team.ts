@@ -1,24 +1,24 @@
 import { Router } from 'express'
 import { TeamController } from 'controller'
+import { protect, authorize } from 'middleware'
 
 const router = Router({ mergeParams: true })
 
 router.route('/')
   .get(TeamController.list)
   .post(TeamController.create)
-  .delete(TeamController.deleteTeam)
+  .delete( protect, authorize('admin'), TeamController.deleteTeam)
 
-router.post('/create-basic', TeamController.createBasic)
+router.post('/create-basic', protect, authorize('admin'), TeamController.createBasic)
 
-router.route('/:id')
-  .get(TeamController.get)
-  .put(TeamController.update)
+router.route('/:id').get(protect, TeamController.get)
+  .put(protect, TeamController.update)
 
 router.route('/:id/roster')
-  .get(TeamController.roster)
-  .post(TeamController.addPlayer)
+  .get(protect, TeamController.roster)
+  .post(protect, TeamController.addPlayer)
 
 router.route('/:id/roster/:playerId')
-  .delete(TeamController.removePlayer)
+  .delete(protect, TeamController.removePlayer)
 
 export default router
