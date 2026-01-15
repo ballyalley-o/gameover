@@ -33,6 +33,7 @@ export const playerInsertSchema = createInsertSchema(players, {
  pace        : () => z.number().int().min(0).max(100).optional(),
  clutch      : () => z.number().int().min(0).max(100).optional(),
  stamina     : () => z.number().int().min(0).max(100).optional(),
+ salary      : () => z.int().positive().optional(),
  injuryRisk  : (schema) => schema?.optional() ?? z.string().optional(),
 })
 
