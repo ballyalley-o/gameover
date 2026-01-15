@@ -2,7 +2,7 @@ import { db } from 'gameover'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { CODE, RESPONSE, TRADE_STATUS } from 'constant'
 import { ErrorResponse } from 'middleware'
-import { rosters, teams, trades } from 'db/schema'
+import { players, rosters, teams, trades } from 'db/schema'
 
 const MATCH_THRESHOLD = 6_533_000
 const HIGH_MULT       = 1.25
@@ -21,6 +21,18 @@ export interface TradePreview {
   reason?: string
   from   : { outgoing: number; incoming: number; allowedIncoming: number; postSalary: number; cap: number }
   to     : { outgoing: number; incoming: number; allowedIncoming: number; postSalary: number; cap: number }
+}
+
+export interface TradeSuggestionPayload {
+  fromTeamId     : string
+  toTeamId       : string
+  maxSuggestions?: number
+}
+
+export interface TradeSuggestion {
+  outgoing: Array<{ playerId: string; firstname: string | null; lastname: string | null; salary: number }>
+  incoming: Array<{ playerId: string; firstname: string | null; lastname: string | null; salary: number }>
+  preview : TradePreview
 }
 
 const allowedIncoming = (outgoing: number) => {
@@ -42,8 +54,72 @@ const fetchRosterEntries = async (teamId: string, playerIds: string[]) => {
   return db.select().from(rosters).where(and(eq(rosters.teamId, teamId), inArray(rosters.playerId, playerIds)))
 }
 
+const fetchRosterCandidates = async (teamId: string) => {
+  const rows = await db
+    .select({
+      playerId : rosters.playerId,
+      salary   : rosters.salary,
+      firstname: players.firstname,
+      lastname : players.lastname,
+    })
+    .from(rosters)
+    .innerJoin(players, eq(rosters.playerId, players.id))
+    .where(eq(rosters.teamId, teamId))
+
+  return rows.map((row) => ({ ...row, salary: row.salary || 0 }))
+}
+
+const buildPreview = ({
+  fromTeam,
+  toTeam,
+  fromCurrentSalary,
+  toCurrentSalary,
+  outgoingFrom,
+  incomingToFrom,
+  outgoingTo,
+  incomingToTo,
+}: {
+  fromTeam: typeof teams.$inferSelect
+  toTeam: typeof teams.$inferSelect
+  fromCurrentSalary: number
+  toCurrentSalary: number
+  outgoingFrom: number
+  incomingToFrom: number
+  outgoingTo: number
+  incomingToTo: number
+}): TradePreview => {
+  const fromAllowed = allowedIncoming(outgoingFrom)
+  const toAllowed   = allowedIncoming(outgoingTo)
+
+  const fromPostSalary = fromCurrentSalary - outgoingFrom + incomingToFrom
+  const toPostSalary   = toCurrentSalary - outgoingTo + incomingToTo
+
+  let valid  = true
+  let reason = ''
+
+  if (incomingToFrom > fromAllowed) {
+    valid = false
+    reason = 'Incoming salary exceeds allowed matching for fromTeam'
+  } else if (incomingToTo > toAllowed) {
+    valid = false
+    reason = 'Incoming salary exceeds allowed matching for toTeam'
+  } else if (fromTeam.hardCapActive && fromPostSalary > fromTeam.salaryCap) {
+    valid = false
+    reason = 'From team exceeds hard cap'
+  } else if (toTeam.hardCapActive && toPostSalary > toTeam.salaryCap) {
+    valid = false
+    reason = 'To team exceeds hard cap'
+  }
+
+  return {
+    valid,
+    reason: reason || undefined,
+    from  : { outgoing: outgoingFrom, incoming: incomingToFrom, allowedIncoming: fromAllowed, postSalary: fromPostSalary, cap: fromTeam.salaryCap },
+    to    : { outgoing: outgoingTo, incoming: incomingToTo, allowedIncoming: toAllowed, postSalary: toPostSalary, cap: toTeam.salaryCap },
+  }
+}
+
 export const tradeService = {
-  // async suggest(): Promise<>
   async preview(payload: TradePayload): Promise<TradePreview> {
     const { fromTeamId, toTeamId, outgoingIds, incomingIds } = payload
 
@@ -69,35 +145,60 @@ export const tradeService = {
     const fromCurrentSalary = await getTeamSalary(fromTeamId)
     const toCurrentSalary   = await getTeamSalary(toTeamId)
 
-    const fromAllowed = allowedIncoming(outgoingFrom)
-    const toAllowed   = allowedIncoming(outgoingTo)
+    return buildPreview({
+      fromTeam,
+      toTeam,
+      fromCurrentSalary,
+      toCurrentSalary,
+      outgoingFrom,
+      incomingToFrom,
+      outgoingTo,
+      incomingToTo,
+    })
+  },
 
-    const fromPostSalary = fromCurrentSalary - outgoingFrom + incomingToFrom
-    const toPostSalary   = toCurrentSalary - outgoingTo + incomingToTo
+  async suggest(payload: TradeSuggestionPayload): Promise<TradeSuggestion[]> {
+    const { fromTeamId, toTeamId, maxSuggestions = 10 } = payload
 
-    let valid  = true
-    let reason = ''
+    const [fromTeam] = await db.select().from(teams).where(eq(teams.id, fromTeamId))
+    const [toTeam]   = await db.select().from(teams).where(eq(teams.id, toTeamId))
+    if (!fromTeam || !toTeam) throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
 
-    if (incomingToFrom > fromAllowed) {
-      valid = false
-      reason = 'Incoming salary exceeds allowed matching for fromTeam'
-    } else if (incomingToTo > toAllowed) {
-      valid = false
-      reason = 'Incoming salary exceeds allowed matching for toTeam'
-    } else if (fromTeam.hardCapActive && fromPostSalary > fromTeam.salaryCap) {
-      valid = false
-      reason = 'From team exceeds hard cap'
-    } else if (toTeam.hardCapActive && toPostSalary > toTeam.salaryCap) {
-      valid = false
-      reason = 'To team exceeds hard cap'
+    const [fromRoster, toRoster] = await Promise.all([ fetchRosterCandidates(fromTeamId), fetchRosterCandidates(toTeamId) ])
+
+    const fromCurrentSalary = sumSalary(fromRoster)
+    const toCurrentSalary   = sumSalary(toRoster)
+
+    const suggestions: TradeSuggestion[] = []
+
+    for (const outgoing of fromRoster) {
+      for (const incoming of toRoster) {
+        const preview = buildPreview({
+          fromTeam,
+          toTeam,
+          fromCurrentSalary,
+          toCurrentSalary,
+          outgoingFrom  : outgoing.salary,
+          incomingToFrom: incoming.salary,
+          outgoingTo    : incoming.salary,
+          incomingToTo  : outgoing.salary,
+        })
+
+        if (!preview.valid) continue
+
+        suggestions.push({
+          outgoing: [outgoing],
+          incoming: [incoming],
+          preview,
+        })
+
+        if (suggestions.length >= maxSuggestions) {
+          return suggestions
+        }
+      }
     }
 
-    return {
-      valid,
-      reason: reason || undefined,
-      from  : { outgoing: outgoingFrom, incoming: incomingToFrom, allowedIncoming: fromAllowed, postSalary: fromPostSalary, cap: fromTeam.salaryCap },
-      to    : { outgoing: outgoingTo, incoming: incomingToTo, allowedIncoming: toAllowed, postSalary: toPostSalary, cap: toTeam.salaryCap },
-    }
+    return suggestions
   },
 
   async execute(payload: TradePayload) {
