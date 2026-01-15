@@ -5,9 +5,9 @@ import { protect, authorize } from 'middleware'
 const router = Router({ mergeParams: true })
 
 router.route('/')
-  .get(TeamController.list)
-  .post(TeamController.create)
-  .delete( protect, authorize('admin'), TeamController.deleteTeam)
+  .get(protect, TeamController.list)
+  .post(protect, TeamController.create)
+  .delete(protect, authorize('admin'), TeamController.deleteTeam)
 
 router.post('/create-basic', protect, authorize('admin'), TeamController.createBasic)
 
