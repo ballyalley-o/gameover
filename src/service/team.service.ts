@@ -77,4 +77,8 @@ export const teamService = {
     const rows = playerIds.map((pid) => ({ teamId, playerId: pid }))
     await db.insert(rosters).values(rows)
   },
+
+  async deleteTeam(): Promise<void> {
+    await db.delete(teams)
+  }
 }
