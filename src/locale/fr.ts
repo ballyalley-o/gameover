@@ -14,7 +14,8 @@ export const fr = {
     "invalid_season_format": "Format invalide ; utilisez AAAA, YYYYPRE, YYYYPOST ou YYYYSTAR",
     "invalie_date_format": "Date fournie invalide ; date prévue au format AAAA-MM-JJ ou AAAA-MMM-JJ (par exemple 2025-01-25, 2025-JAN-12)",
     "invalid_season_format_short": "Format invalide ; utilisez AAAA ou AAAAPRÉ",
-    "invalid_data_response": "Réponse de données invalide"
+    "invalid_data_response": "Réponse de données invalide",
+    "invalid_email_format": "Format d'e-mail invalide (échec de la vérification Unicode)"
   },
   "validation": {
     "default": {
@@ -23,6 +24,7 @@ export const fr = {
       "max_length": "La longueur de {field} ({value}) dépasse la limite de caractères",
       "invalid": "{field} non valide",
       "unique": "{field} existe déjà"
-    }
+    },
+    "password": "Le mot de passe doit comporter plus de 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole."
   }
 } as const

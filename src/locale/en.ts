@@ -7,6 +7,7 @@ export const en = {
     user_signed_in: 'User signed in',
   },
   error: {
+    invalid_email_format       : 'Invalid email format (Unicode check failed)',
     invalid_team_abbr          : 'Invalid team provided; expected NBA 3-letter format (e.g. CLE, MIA)',
     invalie_date_format        : 'Invalid date provided; expected date YYYY-MM-DD or YYYY-MMM-DD format (e.g. 2025-01-25, 2025-JAN-12)',
     invalid_season_format      : 'Invalid format; use YYYY, YYYYPRE, YYYYPOST or YYYYSTAR',
@@ -18,11 +19,12 @@ export const en = {
   },
   validation: {
     default: {
-      required  : '{field} is required',
+      invalid   : 'Invalid {field}',
       length    : '{field} length ({value}) must be between {min} and {max} characters',
       max_length: '{field} length ({value}) exceeds the limit of characters',
-      invalid   : 'Invalid {field}',
+      required  : '{field} is required',
       unique    : '{field} already exists',
     },
+    password: "Password must be 8+ characters with at least one uppercase, lowercase, number, and symbol."
   }
 }
