@@ -19,7 +19,10 @@ export const archetypeEnum = pgEnum('archetype', [
 export const gameStatusEnum = pgEnum('game_status', ['scheduled', 'completed', 'simulated'])
 export const statusEnum     = pgEnum('status', ['Active', 'Inactive'])
 
-export const users = pgTable('user', {
+export const conferenceEnum = pgEnum('conference', ['Eastern', 'Western'])
+export const divisionEnum   = pgEnum('division', ['Southeast', 'Central', 'Atlantic', 'Southwest', 'Northwest', 'Pacific'])
+
+export const users = pgTable('users', {
   id           : uuid('id').defaultRandom().primaryKey(),
   firstname    : varchar('firstname', { length: 255 }).notNull(),
   lastname     : varchar('lastname', { length: 255 }),
@@ -34,8 +37,8 @@ export const users = pgTable('user', {
 export const players = pgTable('players', {
   id          : uuid('id').defaultRandom().primaryKey(),
   playerId    : varchar('player_id', { length: 64 }).notNull(),
-  firstName   : varchar('first_name', { length: 255 }).notNull(),
-  lastName    : varchar('last_name', { length: 255 }).notNull(),
+  firstname   : varchar('first_name', { length: 255 }).notNull(),
+  lastname    : varchar('last_name', { length: 255 }).notNull(),
   archetype   : archetypeEnum('archetype').default('unknown'),
   positions   : positionEnum('positions').array().notNull(),
   status      : statusEnum('status').default('Active'),
@@ -60,15 +63,29 @@ export const players = pgTable('players', {
 })
 
 export const teams = pgTable('teams', {
-  id           : uuid('id').defaultRandom().primaryKey(),
-  ownerUserId  : uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
-  name         : varchar('name', { length: 255 }).notNull(),
-  market       : varchar('market', { length: 255 }),
-  styleTags    : text('style_tags').array(),
-  salaryCap    : integer('salary_cap').notNull().default(_SALARY_CAP_DEFAULT),
-  hardCapActive: boolean('hard_cap_active').notNull().default(false),
-  createdAt    : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
-  updatedAt    : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+  id             : uuid('id').defaultRandom().primaryKey(),
+  teamId         : varchar('team_id', { length: 64 }).notNull().unique(),
+  ownerUserId    : uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
+  stadiumId      : smallint('stadium_id').unique(),
+  status         : statusEnum('status'),
+  city           : varchar('city', { length: 100 }).notNull(),
+  name           : varchar('name', { length: 255 }).notNull(),
+  key            : varchar('key', { length: 3 }).notNull().unique(),
+  conference     : conferenceEnum('conference'),
+  division       : divisionEnum('division'),
+  primaryColor   : varchar('primary_color', { length: 8 }),
+  secondaryColor : varchar('secondary_color', { length: 8 }),
+  tertiaryColor  : varchar('tertiary_color', { length: 8 }),
+  quaternaryColor: varchar('quaternary_color', { length: 8 }),
+  logoUrl        : varchar('logo_url', { length: 255 }),
+  wordmarkUrl    : varchar('wordmark_url', { length: 255 }),
+  headcoach      : varchar('headcoach', { length: 255 }).notNull(),
+  market         : varchar('market', { length: 255 }),
+  styleTags      : text('style_tags').array(),
+  salaryCap      : integer('salary_cap').notNull().default(_SALARY_CAP_DEFAULT),
+  hardCapActive  : boolean('hard_cap_active').notNull().default(false),
+  createdAt      : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  updatedAt      : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
   ownerIdx: index('idx_teams_owner').on(table.ownerUserId),
 }))
