@@ -22,7 +22,7 @@ export const protect = asyncHandler(async (req, _res, next) => {
 
     try {
         const decoded  = jwt.verify(token, GLOBAL.JWT_SECRET as string) as DecodedToken
-        const [user]   = await db.select().from(users).where(eq(users.id, decoded.id))
+        const [user]   = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, decoded.id))
 
         if (!user) {
           return next(new ErrorResponse(RESPONSE.ERROR[401], CODE.UNAUTHORIZED))
