@@ -39,7 +39,7 @@ export const authorize = (...roles: string[]) => {
     return async (req: any, _res: Response, next: NextFunction): Promise<void> => {
         const role = req.user.role
         if (!roles.includes(role)) {
-            return next(new ErrorResponse(RESPONSE.ERROR[401], CODE.UNAUTHORIZED))
+            return next(new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN))
         }
         next()
     }
