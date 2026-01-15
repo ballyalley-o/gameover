@@ -13,7 +13,7 @@ export const playerService = {
   async list(filters: PlayerFilters = {}): Promise<DrizzlePlayer[]> {
     const conditions = []
 
-    const fullName = sql`concat(${players.firstName}, ' ', ${players.lastName})`
+    const fullName = sql`concat(${players.firstname}, ' ', ${players.lastname})`
     if (filters.fullName) {
       conditions.push(ilike(fullName, `%${filters.fullName}%`))
     }
