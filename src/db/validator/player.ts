@@ -18,8 +18,8 @@ const archetypeEnum = z.enum([
 export const playerSelectSchema = createSelectSchema(players)
 export const playerInsertSchema = createInsertSchema(players, {
  playerId    : () => z.union([z.string(), z.number()]).transform((v) => v.toString()),
- firstName   : (schema) => schema.min(1).max(255),
- lastName    : (schema) => schema.min(1).max(255),
+ firstname   : (schema) => schema.min(1).max(255),
+ lastname    : (schema) => schema.min(1).max(255),
  archetype   : archetypeEnum,
  positions   : () => z.array(positionEnum).min(1),
  heightInches: (schema) => schema.int().positive().optional() ?? z.number().optional(),
