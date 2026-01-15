@@ -21,4 +21,7 @@ router.route('/:id/roster')
 router.route('/:id/roster/:playerId')
   .delete(protect, TeamController.removePlayer)
 
+/**
+ * @path {apiURL}/nba/team
+ */
 export default router

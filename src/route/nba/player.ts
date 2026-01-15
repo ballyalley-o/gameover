@@ -15,4 +15,7 @@ router.route('/:id')
   .put(PlayerController.update)
   .delete(PlayerController.remove)
 
+/**
+ * @path {apiURL}/nba/player
+ */
 export default router

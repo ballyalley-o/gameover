@@ -24,4 +24,8 @@ router.get('/standing', protect, FeedController.getStanding)
 router.get('/news', protect, FeedController.getNewsAll)
 router.get('/freeagent', protect, FeedController.getFreeAgents)
 
+
+/**
+ * @path {apiURL}/feed/sportsdata
+ */
 export default router
