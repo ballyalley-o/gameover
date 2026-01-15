@@ -14,7 +14,6 @@ router.route('/:id')
 .put(UserController.updateUser)
 .delete(UserController.deleteUser)
 
-
 /**
  * @path {apiURL}/auth/user
  */
