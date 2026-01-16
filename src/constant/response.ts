@@ -59,7 +59,7 @@ export class Resp extends AbstractLogger {
       success: true,
       code,
       key : cookieName,
-      data: user,
+      data: user
     }
   }
 
