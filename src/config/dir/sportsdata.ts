@@ -46,6 +46,7 @@ const _PLAY_BY_PLAY_BY_GAMEID_FINAL   = 'playbyplayfinal'
 const _PLAY_BY_PLAY_DELTA_BY_DATE     = 'playbyplaydelta'
 const _PLAY_BY_PLAY_BY_GAMEID         = 'playbyplay'
 
+const _PLAYER                         = 'player'
 const _PLAYERS                        = 'players'
 const _PLAYERS_BY_FREEAGENTS          = 'playersbyfreeagents'
 const _PLAYERS_BASIC                  = 'playersbasic'
@@ -105,8 +106,10 @@ export const SPORTSDATA_DIR = {
   PLAY_BY_PLAY_BY_GAMEID_FINAL   : (gameId: string) => _combineNBAScores(_PLAY_BY_PLAY_BY_GAMEID_FINAL, gameId),
   PLAY_BY_PLAY_BY_GAMEID         : (gameId: string) => _combineNBAScores(_PLAY_BY_PLAY_BY_GAMEID, gameId),
   PLAY_BY_PLAY_DELTA_BY_DATE     : (date: string, min: string) => _combineNBAScores(_PLAY_BY_PLAY_DELTA_BY_DATE, date, min),
-  PLAYERS_BASIC                  : (player: string) => _combineNBAScores(_PLAYERS_BASIC, player),
+  PLAYER_BY_PLAYERID             : (playerId: string) => _combineNBAScores(_PLAYER, playerId),
+  PLAYERS_BASIC                  : (playerId: string) => _combineNBAScores(_PLAYERS_BASIC, playerId),
   PLAYER_DETAILS                 : _combineNBAScores(_PLAYERS),
+  PLAYERS_PROFILES_BY_TEAM       : (team: TeamAbbrNBA) => _combineNBAScores(_PLAYERS_BASIC, team),
   PLAYERS_FREEAGENTS             : _combineNBAScores(_PLAYERS_BY_FREEAGENTS),
   PLAYERS_ACTIVE                 : _combineNBAScores(_PLAYERS_ACTIVE_BASIC),
   PLAYERS_BY_TEAM                : (team: TeamAbbrNBA) => _combineNBAScores(_PLAYERS, team),
