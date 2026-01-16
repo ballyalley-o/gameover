@@ -22,7 +22,8 @@ export class AuthController {
 
             if (!isMatch) Service.invalid()
 
-            await Service.sendTokenResponse(user, CODE.OK, res)
+            const userFiltered = { id: user.id, name: `${user.firstname} ${user.lastname}`, email: user.email, role: user.role }
+            await Service.sendTokenResponse(userFiltered, CODE.OK, res)
         } catch (error: any) {
             Service.catchError(error, TAG, 'signIn', res)
         }
@@ -52,9 +53,10 @@ export class AuthController {
                 throw new Error(transl('validation.password'))
             }
 
-            const hashedPassword = await bcrypt.hash(req.body.password, GLOBAL.HASH.SALT_ROUNDS)
-            const [newUser]      = await db.insert(users).values({ ...req.body, password: hashedPassword }).returning()
-            await Service.sendTokenResponse(newUser, CODE.CREATED, res)
+            const hashedPassword  = await bcrypt.hash(req.body.password, GLOBAL.HASH.SALT_ROUNDS)
+            const [newUser]       = await db.insert(users).values({ ...req.body, password: hashedPassword }).returning()
+            const newUserFiltered = { name: `${newUser.firstname} ${newUser.lastname}`, email: newUser.email, role: newUser.role }
+            await Service.sendTokenResponse(newUserFiltered, CODE.CREATED, res)
         } catch (error: any) {
             Service.catchError(error, TAG, 'signUp', res)
         }
