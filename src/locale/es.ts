@@ -15,7 +15,9 @@ export const es = {
     "invalie_date_format": "Fecha proporcionada no válida; fecha prevista AAAA-MM-DD o formato AAAA-MMM-DD (por ejemplo, 2025-01-25, 2025-JAN-12)",
     "invalid_season_format_short": "Formato no válido; utilizar AAAA o AAAYYPRE",
     "invalid_data_response": "Respuesta de datos no válida",
-    "invalid_email_format": "Formato de correo electrónico no válido (falló la verificación Unicode)"
+    "invalid_email_format": "Formato de correo electrónico no válido (falló la verificación Unicode)",
+    "not_found": "NO ENCONTRADO: {field} no encontrado",
+    "failed_find": "No se pudo encontrar el documento solicitado"
   },
   "validation": {
     "default": {
