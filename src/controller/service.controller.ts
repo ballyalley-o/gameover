@@ -49,7 +49,8 @@ export class Service {
       options.secure = true
     }
 
-    res.status(code).cookie(GLOBAL.COOKIE.NAME, token, options).send(Resp.TokenResponse(token, user))
+    const { id, ...rest } = user
+    res.status(code).cookie(GLOBAL.COOKIE.NAME, token, options).send(Resp.TokenResponse(token, rest))
   }
 
   public static notFound(): never {
