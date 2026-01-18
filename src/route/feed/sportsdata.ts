@@ -4,10 +4,12 @@ import { protect } from 'middleware'
 
 const router = Router({ mergeParams: true })
 
+router.get('/player', protect, FeedController.getPlayerByPlayerId)
 router.get('/player-active-all', protect, FeedController.getPlayerActiveAll)
 router.get('/player-detail-all', protect, FeedController.getPlayerDetailAll)
 router.get('/player-injured-all', protect, FeedController.getInjuredPlayerAll)
 router.get('/player-all-by-team', protect, FeedController.getPlayerAllByTeam)
+router.get('/player-all-profiles-by-team', protect, FeedController.getPlayerAllProfilesByTeam)
 router.get('/player-stats', protect, FeedController.getPlayerStatsBySeasonAndPlayerId)
 
 router.get('/team-all', protect, FeedController.getTeamAll)
