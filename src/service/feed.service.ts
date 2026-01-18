@@ -9,6 +9,12 @@ const _axiosGET = async (url: string) => {
 
 export const feedService = {
   // Player
+  async getPlayerByPlayerId(playerId: string) {
+    const url      = SPORTSDATA_DIR.PLAYER_BY_PLAYERID(playerId)
+    const { data } = await _axiosGET(url)
+    return data
+  },
+
   async getPlayerActiveAll() {
     const url      = SPORTSDATA_DIR.PLAYERS_ACTIVE
     const { data } = await _axiosGET(url)
@@ -42,6 +48,12 @@ export const feedService = {
 
   async getTeamActiveAll() {
     const url      = SPORTSDATA_DIR.TEAM_ACTIVE
+    const { data } = await _axiosGET(url)
+    return data
+  },
+
+  async getPlayerAllProfilesByTeam(team: TeamAbbrNBA) {
+    const url      = SPORTSDATA_DIR.PLAYERS_PROFILES_BY_TEAM(team)
     const { data } = await _axiosGET(url)
     return data
   },
