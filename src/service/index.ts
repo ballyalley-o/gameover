@@ -1,6 +1,7 @@
 export * from './player.service'
 export * from './team.service'
 export * from './lineup.service'
+export * from './feed.service'
 export * from './chemistry.service'
 export * from './sim.service'
 export * from './trade.service'
