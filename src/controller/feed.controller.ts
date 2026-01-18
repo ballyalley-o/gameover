@@ -21,6 +21,7 @@ export class FeedController {
             Service.catchError(error, TAG, 'getPlayerActiveAll', res)
         }
     }
+
     public static async getPlayerDetailAll(_req: Request, res: Response, _next: NextFunction): Promise<void> {
         try {
             const players = await feedService.getPlayerDetailAll()
@@ -29,6 +30,23 @@ export class FeedController {
             Service.catchError(error, TAG, 'getPlayerDetailAll', res)
         }
     }
+
+    public static async getPlayerByPlayerId(req: Request, res: Response, _next: NextFunction): Promise<void> {
+        try {
+            const { playerId } = req.query
+            const player      = await feedService.getPlayerByPlayerId(String(playerId))
+
+            if (!player) {
+                res.status(CODE.NOT_FOUND).json(Resp.Error(transl('error.not_found', { field: 'Player' }), CODE.NOT_FOUND))
+                return
+            }
+
+            res.status(CODE.OK).json(Resp.Ok(player))
+        } catch (error) {
+            Service.catchError(error, TAG, 'getPlayerByPlayerId', res)
+        }
+    }
+
 
     public static async getPlayerAllByTeam(req: Request, res: Response, _next: NextFunction): Promise<void> {
         try {
@@ -60,7 +78,7 @@ export class FeedController {
             const dbPlayer = await db.select().from(players).where(eq(players.playerId, playerIdStr)).limit(1)
 
             if (!dbPlayer || !Array.isArray(dbPlayer) || dbPlayer.length <= 0) {
-                res.status(CODE.NOT_FOUND).json(Resp.Error('Not found: Player not found', CODE.NOT_FOUND))
+                res.status(CODE.NOT_FOUND).json(Resp.Error(transl('error.not_found', { field: 'Player' }), CODE.NOT_FOUND))
                 return
             }
 
@@ -97,7 +115,7 @@ export class FeedController {
     }
 
     // Team
-    public static async getTeamAll(req: Request, res: Response, _next: NextFunction): Promise<void> {
+    public static async getTeamAll(_req: Request, res: Response, _next: NextFunction): Promise<void> {
         try {
             const teams = await feedService.getTeamAll()
             res.status(CODE.OK).json(Resp.Ok(teams, Array.isArray(teams) ? teams.length : undefined))
@@ -112,6 +130,21 @@ export class FeedController {
             res.status(CODE.OK).json(Resp.Ok(activeTeams, Array.isArray(activeTeams) ? activeTeams.length : undefined))
         } catch (error) {
             Service.catchError(error, TAG, 'getTeamActiveAll', res)
+        }
+    }
+
+    public static async getPlayerAllProfilesByTeam(req: Request, res:Response, _next: NextFunction): Promise<void> {
+        try {
+            const teamParam = typeof req.query.team === 'string' ? req.query.team.toUpperCase() : ''
+
+            if (!teamParam || !(teamParam in TEAM_ABBR_NBA)) {
+                res.status(CODE.BAD_REQUEST).json(Resp.Error(transl('error.invalid_team_abbr'), CODE.BAD_REQUEST))
+                return
+            }
+            const playerProfiles = await feedService.getPlayerAllProfilesByTeam(teamParam as TeamAbbrNBA)
+            res.status(CODE.OK).json(Resp.Ok(playerProfiles, Array.isArray(playerProfiles) ? playerProfiles.length : undefined))
+        } catch (error) {
+            Service.catchError(error, TAG, 'getPlayerAllProfilesByTeam', res)
         }
     }
 
