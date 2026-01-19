@@ -1,8 +1,9 @@
 import { Application, Router } from 'express'
 import { MODULE } from 'config/dir'
 import { combine } from 'utility'
-import playerRoute from './player'
+
 import teamRoute from './team'
+import playerRoute from './player'
 import lineupRoute from './lineup'
 import simRoute from './sim'
 import tradeRoute from './trade'
