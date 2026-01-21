@@ -17,7 +17,8 @@ export const fr = {
     "invalid_data_response": "Réponse de données invalide",
     "invalid_email_format": "Format d'e-mail invalide (échec de la vérification Unicode)",
     "not_found": "INTROUVABLE : {field} introuvable",
-    "failed_find": "Impossible de trouver le document demandé"
+    "failed_find": "Impossible de trouver le document demandé",
+    "no_id": "Aucune pièce d'identité ou pièce d'identité invalide fournie"
   },
   "validation": {
     "default": {

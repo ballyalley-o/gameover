@@ -14,6 +14,7 @@ export const en = {
     invalid_season_format      : 'Invalid format; use YYYY, YYYYPRE, YYYYPOST or YYYYSTAR',
     invalid_season_format_short: 'Invalid format; use YYYY or YYYYPRE',
     invalid_data_response      : 'Invalid data response',
+    no_id                      : 'No id or invalid id provided',
     not_found                  : `NOT FOUND: {field} not found`,
     user_not_authenticated     : 'User not authenticated',
     user_not_authorized        : 'User not authorized',
