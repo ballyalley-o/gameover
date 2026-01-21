@@ -1,4 +1,3 @@
-
 declare global {
     namespace Mongoose {
        interface Schema {
@@ -12,17 +11,6 @@ declare global {
 declare type IndexType<T extends Record<string, number>> = {
     [K in typeof T]: IndexDirection }
 
-type Model = IUser
-declare type Role  = 'user' | 'admin'
-
-
-declare interface IUser {
-  _id                                   ?: Mongoose.Schema.Types.ObjectId
-  firstname                              : string
-  lastname                               : string
-  email                                  : string
-  password                               : string
-  role                                   : Role
-}
+declare type Role = 'user' | 'admin'
 
 declare type PasswordStrengthType = 'weak' | 'medium' | 'strong'
