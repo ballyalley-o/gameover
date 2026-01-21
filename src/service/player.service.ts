@@ -33,6 +33,11 @@ export const playerService = {
     return player
   },
 
+  async getPlayerStatsByIdAndSeason(id: string, season: string): Promise<DrizzlePlayer | undefined> {
+    const [stats] = await db.select().from(players).where(eq(players.id, id))
+    return stats
+  },
+
   async create(data: NewDrizzlePlayer): Promise<DrizzlePlayer> {
     const [created] = await db.insert(players).values(data).returning()
     return created
