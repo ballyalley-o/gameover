@@ -92,7 +92,8 @@ export const teams = pgTable('teams', {
 
 export const rosters = pgTable('rosters', {
   id         : uuid('id').defaultRandom().primaryKey(),
-  teamId     : uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  inTeamId   : uuid('in_team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  exTeamId   : varchar('ex_team_id', { length: 64 }).references(() => teams.teamId, { onDelete: 'cascade' }),
   playerId   : uuid('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
   contractYrs: smallint('contract_years').notNull().default(1),
   salary     : integer('salary').notNull().default(0),
@@ -100,9 +101,9 @@ export const rosters = pgTable('rosters', {
   createdAt  : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
   updatedAt  : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
-  teamIdx     : index('idx_rosters_team').on(table.teamId),
+  teamIdx     : index('idx_rosters_team').on(table.inTeamId),
   playerIdx   : index('idx_rosters_player').on(table.playerId),
-  teamPlayerUq: uniqueIndex('uq_rosters_team_player').on(table.teamId, table.playerId),
+  teamPlayerUq: uniqueIndex('uq_rosters_team_player').on(table.inTeamId, table.playerId),
 }))
 
 export const lineups = pgTable('lineups', {
