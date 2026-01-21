@@ -6,11 +6,13 @@ import { playerService } from 'service'
 import { feedService } from 'service/feed.service'
 import { transl } from 'utility'
 
+import { Service } from './service.controller'
+
 const TAG = 'Player.Controller'
 export class PlayerController {
   static async list(req: Request, res: Response) {
     const players = await playerService.list({
-      fullName : req.query.fullName as string,
+      fullname : req.query.fullname as string,
       archetype: req.query.archetype as string,
       position : req.query.position as string,
     })
@@ -18,9 +20,13 @@ export class PlayerController {
   }
 
   static async get(req: Request, res: Response) {
-    const player = await playerService.getById(req.params.id)
-    if (!player) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
-    res.status(CODE.OK).send(Resp.Ok(player))
+    try {
+      const player = await playerService.getById(req.params.playerId)
+      if (!player) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+      res.status(CODE.OK).send(Resp.Ok(player))
+    } catch (error) {
+      Service.catchError(error, TAG, 'get', res)
+    }
   }
 
   static async create(req: Request, res: Response) {
