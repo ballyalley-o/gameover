@@ -11,8 +11,8 @@ export const teamService = {
     return db.select().from(teams).where(where)
   },
 
-  async getById(id: string): Promise<DrizzleTeam | undefined> {
-    const [team] = await db.select().from(teams).where(eq(teams.id, id))
+  async getById(teamId: string): Promise<DrizzleTeam | undefined> {
+    const [team] = await db.select().from(teams).where(eq(teams.teamId, teamId))
     return team
   },
 
