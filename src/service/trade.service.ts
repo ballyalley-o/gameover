@@ -45,13 +45,13 @@ const allowedIncoming = (outgoing: number) => {
 const sumSalary = (rows: Array<{ salary: number | null }>) => rows.reduce((sum, row) => sum + (row.salary || 0), 0)
 
 const getTeamSalary = async (teamId: string) => {
-  const [res] = await db.select({ total: sql<number>`coalesce(sum(${rosters.salary}), 0)` }).from(rosters).where(eq(rosters.teamId, teamId))
+  const [res] = await db.select({ total: sql<number>`coalesce(sum(${rosters.salary}), 0)` }).from(rosters).where(eq(rosters.inTeamId, teamId))
   return res?.total || 0
 }
 
 const fetchRosterEntries = async (teamId: string, playerIds: string[]) => {
   if (!playerIds.length) return []
-  return db.select().from(rosters).where(and(eq(rosters.teamId, teamId), inArray(rosters.playerId, playerIds)))
+  return db.select().from(rosters).where(and(eq(rosters.inTeamId, teamId), inArray(rosters.playerId, playerIds)))
 }
 
 const fetchRosterCandidates = async (teamId: string) => {
@@ -64,7 +64,7 @@ const fetchRosterCandidates = async (teamId: string) => {
     })
     .from(rosters)
     .innerJoin(players, eq(rosters.playerId, players.id))
-    .where(eq(rosters.teamId, teamId))
+    .where(eq(rosters.inTeamId, teamId))
 
   return rows.map((row) => ({ ...row, salary: row.salary || 0 }))
 }
@@ -210,8 +210,8 @@ export const tradeService = {
     const { fromTeamId, toTeamId, outgoingIds, incomingIds } = payload
 
     return db.transaction(async (tx) => {
-      await tx.update(rosters).set({ teamId: toTeamId }).where(and(eq(rosters.teamId, fromTeamId), inArray(rosters.playerId, outgoingIds)))
-      await tx.update(rosters).set({ teamId: fromTeamId }).where(and(eq(rosters.teamId, toTeamId), inArray(rosters.playerId, incomingIds)))
+      await tx.update(rosters).set({ inTeamId: toTeamId }).where(and(eq(rosters.inTeamId, fromTeamId), inArray(rosters.playerId, outgoingIds)))
+      await tx.update(rosters).set({ inTeamId: fromTeamId }).where(and(eq(rosters.inTeamId, toTeamId), inArray(rosters.playerId, incomingIds)))
 
       const [record] = await tx.insert(trades).values({
         fromTeamId,
