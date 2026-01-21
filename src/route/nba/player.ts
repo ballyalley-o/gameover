@@ -10,7 +10,7 @@ router.route('/')
 
 router.post('/create-basic', protect, PlayerController.createBasic)
 
-router.route('/:id')
+router.route('/:playerId')
   .get(PlayerController.get)
   .put(PlayerController.update)
   .delete(PlayerController.remove)
