@@ -6,15 +6,15 @@ const router = Router({ mergeParams: true })
 
 router.route('/')
   .get(protect, TeamController.list)
-  .post(protect, TeamController.create)
-  .delete(protect, authorize('admin'), TeamController.deleteTeam)
+  .post(protect, authorize('admin'), TeamController.create)
+  .delete(protect, authorize('admin'), TeamController.deleteTeamAll)
 
 router
   .post('/create-basic', protect, authorize('admin'), TeamController.createBasic)
 
 router.route('/:id')
   .get(protect, TeamController.get)
-  .put(protect, TeamController.update)
+  .put(protect, authorize('admin'),TeamController.update)
 
 
 /**
