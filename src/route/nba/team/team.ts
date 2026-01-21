@@ -12,7 +12,7 @@ router.route('/')
 router
   .post('/create-basic', protect, authorize('admin'), TeamController.createBasic)
 
-router.route('/:id')
+router.route('/:teamId')
   .get(protect, TeamController.get)
   .put(protect, authorize('admin'),TeamController.update)
 
