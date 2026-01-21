@@ -7,7 +7,7 @@ import rosterRoute from './roster'
 const router = Router({ mergeParams: true })
 
 router.use('/', teamRoute)
-router.use(combine(':key', 'roster'), rosterRoute)
+router.use(combine(':teamId', 'roster'), rosterRoute)
 
 /**
  * @path {apiURL}/nba/team
