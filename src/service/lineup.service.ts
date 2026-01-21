@@ -73,7 +73,7 @@ export const lineupService = {
     const rostered = await db
       .select({ playerId: rosters.playerId })
       .from(rosters)
-      .where(and(eq(rosters.teamId, teamId), inArray(rosters.playerId, playerIds)))
+      .where(and(eq(rosters.inTeamId, teamId), inArray(rosters.playerId, playerIds)))
 
     const rosteredIds = new Set(rostered.map((r) => r.playerId))
     const missing = playerIds.filter((id) => !rosteredIds.has(id))
