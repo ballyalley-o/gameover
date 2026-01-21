@@ -19,9 +19,13 @@ export class TeamController {
   }
 
   static async get(req: Request, res: Response) {
-    const team = await teamService.getById(req.params.id)
-    if (!team) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
-    res.status(CODE.OK).send(Resp.Ok(team))
+    try {
+      const team = await teamService.getById(req.params.teamId)
+      if (!team) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+      res.status(CODE.OK).send(Resp.Ok(team))
+    } catch (error) {
+      Service.catchError(error, TAG, 'get', res)
+    }
   }
 
   static async create(req: Request, res: Response) {
