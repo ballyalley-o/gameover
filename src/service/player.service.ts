@@ -4,7 +4,7 @@ import { players } from 'db/schema'
 import type { DrizzlePlayer, NewDrizzlePlayer } from 'types/schema'
 
 export interface PlayerFilters {
-  fullName ?: string
+  fullname ?: string
   archetype?: string
   position ?: string
 }
@@ -13,9 +13,9 @@ export const playerService = {
   async list(filters: PlayerFilters = {}): Promise<DrizzlePlayer[]> {
     const conditions = []
 
-    const fullName = sql`concat(${players.firstname}, ' ', ${players.lastname})`
-    if (filters.fullName) {
-      conditions.push(ilike(fullName, `%${filters.fullName}%`))
+    const fullname = sql`concat(${players.firstname}, ' ', ${players.lastname})`
+    if (filters.fullname) {
+      conditions.push(ilike(fullname, `%${filters.fullname}%`))
     }
     if (filters.archetype) {
       conditions.push(eq(players.archetype, filters.archetype as any))
@@ -28,8 +28,8 @@ export const playerService = {
     return db.select().from(players).where(where)
   },
 
-  async getById(id: string): Promise<DrizzlePlayer | undefined> {
-    const [player] = await db.select().from(players).where(eq(players.id, id))
+  async getById(playerId: string): Promise<DrizzlePlayer | undefined> {
+    const [player] = await db.select().from(players).where(eq(players.playerId, playerId))
     return player
   },
 
