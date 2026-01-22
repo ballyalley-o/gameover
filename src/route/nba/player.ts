@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { PlayerController } from 'controller'
-import { protect } from 'middleware'
+import { authorize, protect } from 'middleware'
 
 const router = Router({ mergeParams: true })
 
@@ -9,6 +9,9 @@ router.route('/')
   .post(PlayerController.create)
 
 router.post('/create-basic', protect, PlayerController.createBasic)
+
+router.put('/archetype/refresh', protect, authorize('admin'), PlayerController.refreshArchetype)
+router.put('/stats/refresh', protect, authorize('admin'), PlayerController.syncAllStats)
 
 router.route('/:playerId')
   .get(PlayerController.get)
