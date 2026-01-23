@@ -44,7 +44,15 @@ export const statsService = {
         )
 
         const ratings = {
-            overall, offense, defense, rebounding, passing, iq, pace, clutch, stamina
+            overall   : Math.round(overall),
+            offense   : Math.round(offense),
+            defense   : Math.round(defense),
+            rebounding: Math.round(rebounding),
+            passing   : Math.round(passing),
+            iq        : Math.round(iq),
+            pace      : Math.round(pace),
+            clutch    : Math.round(clutch),
+            stamina   : Math.round(stamina),
         }
 
         return ratings
