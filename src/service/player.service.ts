@@ -69,7 +69,7 @@ export const playerService = {
   },
 
   async syncPlayerAllStats(): Promise<{ total: number; updated: number; skipped: number; failed: number }> {
-    const rows = await db.select({ playerId: players.playerId }).from(players)
+    const rows = await db.select({ playerId: players.playerId, overall: players.overall }).from(players)
 
     let updated = 0
     let skipped = 0
@@ -77,6 +77,11 @@ export const playerService = {
 
     for (const row of rows) {
       if (!row.playerId) {
+        skipped += 1
+        continue
+      }
+
+      if (row.overall !== null) {
         skipped += 1
         continue
       }
