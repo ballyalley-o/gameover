@@ -4,7 +4,7 @@ import { CODE, RESPONSE } from 'constant'
 import { ErrorResponse } from 'middleware'
 import { chemistryService } from 'service'
 import { lineups, lineupMetrics, players, rosters, teams } from 'db/schema'
-import type { Lineup, LineupMetrics, LineupSlot } from 'types/game'
+import type { Lineup, LineupMetric, LineupSlot } from 'types/game'
 
 const defaultRating = 50
 
@@ -82,15 +82,15 @@ export const lineupService = {
     }
   },
 
-  async computeMetrics(lineupId: string): Promise<LineupMetrics> {
+  async computeMetric(lineupId: string): Promise<LineupMetric> {
     const lineup = await this.getById(lineupId)
     if (!lineup) throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
 
-    const slots = normalizeSlots(lineup.slots)
-    const playerIds = slots.map((s) => s.playerId)
+    const slots           = normalizeSlots(lineup.slots)
+    const playerIds       = slots.map((s) => s.playerId)
 
     const selectedPlayers = await db.select().from(players).where(inArray(players.id, playerIds))
-    const playerMap = new Map(selectedPlayers.map((p) => [p.id, p]))
+    const playerMap       = new Map(selectedPlayers.map((p) => [p.id, p]))
 
     const metricKeys: Array<keyof typeof players> = ['overall', 'offense', 'defense', 'rebounding', 'pace'] as any
 
@@ -105,7 +105,7 @@ export const lineupService = {
     }, {} as Record<string, number>)
 
     const chemistryScore = await chemistryService.computeLineupChemistry(playerIds)
-    const metrics = roundMetrics({
+    const metrics        = roundMetrics({
       overall   : weighted['overall'] ?? defaultRating,
       offense   : weighted['offense'] ?? defaultRating,
       defense   : weighted['defense'] ?? defaultRating,
@@ -153,7 +153,7 @@ export const lineupService = {
     }
   },
 
-  async getOrComputeMetrics(lineupId: string): Promise<LineupMetrics> {
+  async getOrComputeMetric(lineupId: string): Promise<LineupMetric> {
     const [existing] = await db.select().from(lineupMetrics).where(eq(lineupMetrics.lineupId, lineupId))
     if (existing) {
       return {
@@ -169,6 +169,6 @@ export const lineupService = {
       }
     }
 
-    return this.computeMetrics(lineupId)
+    return this.computeMetric(lineupId)
   },
 }
