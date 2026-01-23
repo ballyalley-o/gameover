@@ -80,7 +80,6 @@ export const teamService = {
       if (unique.length) {
         const upsertRows = unique.map((i) => ({
             inTeamId   : teamId,
-            // exTeamId: i.
             playerId   : i.playerId,
             contractYrs: i.contractYrs,
             salary     : i.salary ?? 0,
