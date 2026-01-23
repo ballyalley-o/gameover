@@ -72,11 +72,11 @@ export interface ChemistryLink {
   id        : string
   playerAId : string
   playerBId : string
-  score     : number  // -5 to 5
+  score     : number
   reason   ?: string
 }
 
-export interface LineupMetrics {
+export interface LineupMetric {
   id        : string
   lineupId  : string
   overall   : number
@@ -124,8 +124,8 @@ export interface SimulationInput {
 export interface SimulationResult {
   game     : Game
   breakdown: {
-    home: LineupMetrics
-    away: LineupMetrics
+    home: LineupMetric
+    away: LineupMetric
   }
   events?: GameEvent[]
 }
