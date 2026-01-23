@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { combinePathParam, PATH_PARAM } from 'config/dir'
 import { UserController } from 'controller'
 import { users } from 'db/schema'
 import { userSelect } from 'db/select'
@@ -7,11 +8,11 @@ import { authorize, protect } from 'middleware'
 
 const router = Router({ mergeParams: true })
 
-router.route('/')
+router.route(PATH_PARAM.ROOT)
 .get(protect, authorize('admin'), advanceResult(users, { select: userSelect, includeTotal: false }), UserController.getUsers)
 .post(protect, authorize('admin'), UserController.createUser)
 
-router.route('/:id')
+router.route(combinePathParam(':id'))
 .get(UserController.getUser)
 .put(UserController.updateUser)
 .delete(UserController.deleteUser)
@@ -19,5 +20,4 @@ router.route('/:id')
 /**
  * @path {apiURL}/auth/user
  */
-const userRoute = router
-export default userRoute
+export default router
