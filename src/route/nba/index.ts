@@ -1,24 +1,18 @@
 import { Application, Router } from 'express'
-import { MODULE } from 'config/dir'
+import { MODULE, PATH_PARAM } from 'config/dir'
 import { combine } from 'utility'
 
 import teamRoute from './team'
 import playerRoute from './player'
 import lineupRoute from './lineup'
-import simRoute from './sim'
+import gameRoute from './game'
 import tradeRoute from './trade'
-
-const router = Router({ mergeParams: true })
 
 export const linkNBARoute = (app: Application, apiVer: string) => {
   const base = combine(apiVer, MODULE.NBA)
-  router.use(combine(base, 'player'), playerRoute)
-  router.use(combine(base, 'team'), teamRoute)
-  router.use(combine(base, 'lineup'), lineupRoute)
-  router.use(combine(base, 'games'), simRoute)
-  router.use(combine(base, 'trades'), tradeRoute)
-
-  app.use(router)
+  app.use(combine(base, PATH_PARAM.PLAYER), playerRoute)
+  app.use(combine(base, PATH_PARAM.TEAM), teamRoute)
+  app.use(combine(base, PATH_PARAM.LINEUP), lineupRoute)
+  app.use(combine(base, PATH_PARAM.GAME), gameRoute)
+  app.use(combine(base, PATH_PARAM.TRADE), tradeRoute)
 }
-
-export default router
