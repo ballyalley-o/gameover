@@ -134,5 +134,42 @@ export const statsService = {
             updated  : updates.length,
             unchanged: rows.length - updates.length,
         }
+    },
+
+    async refreshArchetypeByPlayerId(playerId: string): Promise<{ total: number; updated: number; unchanged: number }> {
+        const rows = await db
+        .select({
+            id        : players.id,
+            positions : players.positions,
+            archetype : players.archetype,
+            overall   : players.overall,
+            offense   : players.offense,
+            defense   : players.defense,
+            rebounding: players.rebounding,
+            passing   : players.passing,
+            iq        : players.iq,
+            pace      : players.pace,
+            clutch    : players.clutch,
+            stamina   : players.stamina,
+        })
+        .from(players).where(eq(players.playerId, String(playerId)))
+
+        const updates = rows
+        .map((row) => ({ id: row.id, archetype: statsService.classifyArchetype(row), current: row.archetype }))
+        .filter((row) => row.archetype !== row.current)
+
+        if (updates.length) {
+        await db.transaction(async (tx) => {
+            for (const update of updates) {
+            await tx.update(players).set({ archetype: update.archetype }).where(eq(players.id, update.id))
+            }
+        })
+        }
+
+        return {
+            total    : rows.length,
+            updated  : updates.length,
+            unchanged: rows.length - updates.length,
+        }
     }
 }
