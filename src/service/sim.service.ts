@@ -3,7 +3,7 @@ import { db } from 'gameover'
 import { CODE, RESPONSE } from 'constant'
 import { ErrorResponse } from 'middleware'
 import { games, lineups } from 'db/schema'
-import type { Game, LineupMetrics, SimulationInput, SimulationResult } from 'types/game'
+import type { Game, LineupMetric, SimulationInput, SimulationResult } from 'types/game'
 import { lineupService } from './lineup.service'
 
 const mulberry32 = (seed: number) => {
@@ -17,7 +17,7 @@ const mulberry32 = (seed: number) => {
   }
 }
 
-const projectScore = (metrics: LineupMetrics, opponent: LineupMetrics, rng: () => number, isHome: boolean) => {
+const projectScore = (metrics: LineupMetric, opponent: LineupMetric, rng: () => number, isHome: boolean) => {
   const offense = metrics.offense ?? 50
   const defense = metrics.defense ?? 50
   const chemistry = metrics.chemistry ?? 0
@@ -43,8 +43,8 @@ export const simService = {
     }
 
     const [homeMetrics, awayMetrics] = await Promise.all([
-      lineupService.getOrComputeMetrics(input.homeLineupId),
-      lineupService.getOrComputeMetrics(input.awayLineupId),
+      lineupService.getOrComputeMetric(input.homeLineupId),
+      lineupService.getOrComputeMetric(input.awayLineupId),
     ])
 
     const homeScore = projectScore(homeMetrics, awayMetrics, rng, true)
