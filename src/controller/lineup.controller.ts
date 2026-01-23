@@ -21,8 +21,8 @@ export class LineupController {
     res.status(CODE.OK).send(Resp.Ok(lineup))
   }
 
-  static async computeMetrics(req: Request, res: Response) {
-    const metrics = await lineupService.computeMetrics(req.params.id)
+  static async computeMetric(req: Request, res: Response) {
+    const metrics = await lineupService.computeMetric(req.params.id)
     res.status(CODE.OK).send(Resp.Ok(metrics))
   }
 }
