@@ -15,47 +15,6 @@ export interface PlayerFilters {
   position ?: string
 }
 
-const toNumber = (value: unknown) => {
-  if (typeof value === 'number') return value
-  if (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) return Number(value)
-  return 0
-}
-
-const pickStat = (row: Record<string, unknown>, keys: string[]) => {
-  for (const key of keys) {
-    const value = row[key]
-    if (value !== undefined && value !== null && value !== '') {
-      return toNumber(value)
-    }
-  }
-  return 0
-}
-
-const normalizeStats = (stats: unknown): PlayerStatsType | null => {
-  const row = Array.isArray(stats) ? stats[0] : stats
-  if (!row || typeof row !== 'object') return null
-  const record = row as Record<string, unknown>
-
-  return {
-    points                       : pickStat(record, ['Points', 'points']),
-    assists                      : pickStat(record, ['Assists', 'assists']),
-    rebounds                     : pickStat(record, ['Rebounds', 'rebounds']),
-    offensiveRebounds            : pickStat(record, ['OffensiveRebounds', 'offensiveRebounds']),
-    defensiveRebounds            : pickStat(record, ['DefensiveRebounds', 'defensiveRebounds']),
-    steals                       : pickStat(record, ['Steals', 'steals']),
-    blockedShots                 : pickStat(record, ['BlockedShots', 'blockedShots']),
-    turnovers                    : pickStat(record, ['Turnovers', 'turnovers']),
-    minutes                      : pickStat(record, ['Minutes', 'minutes']),
-    trueShootingPercentage       : pickStat(record, ['TrueShootingPercentage', 'trueShootingPercentage']),
-    effectiveFieldGoalsPercentage: pickStat(record, ['EffectiveFieldGoalsPercentage', 'effectiveFieldGoalsPercentage']),
-    usageRatePercentage          : pickStat(record, ['UsageRatePercentage', 'usageRatePercentage']),
-    playerEfficiencyRating       : pickStat(record, ['PlayerEfficiencyRating', 'playerEfficiencyRating']),
-    assistsPercentage            : pickStat(record, ['AssistsPercentage', 'assistsPercentage']),
-    plusMinus                    : pickStat(record, ['PlusMinus', 'plusMinus']),
-    games                        : pickStat(record, ['Games', 'games']),
-  }
-}
-
 export const playerService = {
   async list(filters: PlayerFilters = {}): Promise<DrizzlePlayer[]> {
     const conditions = []
@@ -80,11 +39,6 @@ export const playerService = {
     return player
   },
 
-  async getPlayerStatsByIdAndSeason(id: string, season: string): Promise<DrizzlePlayer | undefined> {
-    const [stats] = await db.select().from(players).where(eq(players.id, id))
-    return stats
-  },
-
   async create(data: NewDrizzlePlayer): Promise<DrizzlePlayer> {
     const [created] = await db.insert(players).values(data).returning()
     return created
@@ -103,7 +57,7 @@ export const playerService = {
     const normalizedPlayerId = String(playerId)
     const currentSeason      = new Date().getFullYear()
     const stats              = await feedService.getPlayerStatsBySeasonAndPlayerId(String(currentSeason), normalizedPlayerId)
-    const normalized         = normalizeStats(stats)
+    const normalized         = statsService.normalizeStats(stats)
 
     if (!normalized) {
       return undefined
@@ -135,17 +89,12 @@ export const playerService = {
           skipped += 1
         }
       } catch (error) {
-        console.log('error:', error)
         failed += 1
       }
     }
 
 
     return { total: rows.length, updated, skipped, failed }
-  },
-
-  async refreshArchetype(): Promise<{ total: number; updated: number; unchanged: number }> {
-    return statsService.refreshArchetype()
   },
 
   async remove(id: string): Promise<void> {
