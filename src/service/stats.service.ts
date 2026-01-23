@@ -1,5 +1,5 @@
 import { db } from "config"
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { players } from "db/schema"
 
 const _clamp    = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n))
@@ -158,12 +158,13 @@ export const statsService = {
 
         const updates = rows
             .map((row) => ({ id: row.id, archetype: statsService.computeArchetypeFromRating(row), current: row.archetype }))
+            .filter((row) => row.current === 'unknown')
             .filter((row) => row.archetype !== row.current)
 
         if (updates.length) {
         await db.transaction(async (tx) => {
             for (const update of updates) {
-            await tx.update(players).set({ archetype: update.archetype }).where(eq(players.id, update.id))
+                await tx.update(players).set({ archetype: update.archetype }).where(and(eq(players.id, update.id), eq(players.archetype, 'unknown')))
             }
         })
         }
