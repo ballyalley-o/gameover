@@ -1,13 +1,13 @@
 import { Router } from 'express'
-import { combine } from 'utility'
+import { combinePathParam, PATH_PARAM } from 'config/dir'
 
 import teamRoute from './team'
 import rosterRoute from './roster'
 
 const router = Router({ mergeParams: true })
 
-router.use('/', teamRoute)
-router.use(combine(':teamId', 'roster'), rosterRoute)
+router.use(PATH_PARAM.ROOT, teamRoute)
+router.use(combinePathParam(':teamId', 'roster'), rosterRoute)
 
 /**
  * @path {apiURL}/nba/team
