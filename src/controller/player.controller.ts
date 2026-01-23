@@ -4,6 +4,7 @@ import { ErrorResponse } from 'middleware'
 import { playerInsertSchema } from 'db/validator/player'
 import { playerService } from 'service'
 import { feedService } from 'service/feed.service'
+import { statsService } from 'service/stats.service'
 import { transl } from 'utility'
 
 import { Service } from './service.controller'
@@ -75,13 +76,71 @@ export class PlayerController {
   }
 
   static async update(req: Request, res: Response) {
-    const updated = await playerService.update(req.params.id, req.body)
-    if (!updated) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
-    res.status(CODE.OK).send(Resp.Ok(updated))
+    try {
+      const updated = await playerService.update(req.params.id, req.body)
+      if (!updated) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+      res.status(CODE.OK).send(Resp.Ok(updated))
+    } catch (error) {
+      Service.catchError(error, TAG, 'update', res)
+    }
+  }
+
+  static async updatePlayerStats(req: Request, res: Response) {
+    try {
+      const updated = await playerService.update(req.params.id, req.body)
+      if (!updated) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+      res.status(CODE.OK).send(Resp.Ok(updated))
+    } catch (error) {
+      Service.catchError(error, TAG, 'updatePlayerStats', res)
+    }
   }
 
   static async remove(req: Request, res: Response) {
     await playerService.remove(req.params.id)
     res.status(CODE.OK).send(Resp.Ok({}))
+  }
+
+  static async refreshArchetype(_req: Request, res: Response) {
+    try {
+      const result = await playerService.refreshArchetype()
+      res.status(CODE.OK).send(Resp.Ok(result))
+    } catch (error) {
+      Service.catchError(error, TAG, 'refreshArchetype', res)
+    }
+  }
+
+  static async refreshArchetypeByPlayerId(req: Request, res: Response) {
+    try {
+      const { playerId } = req.params
+
+      const result = await statsService.refreshArchetypeByPlayerId(playerId)
+      res.status(CODE.OK).send(Resp.Ok(result))
+    } catch (error) {
+      Service.catchError(error, TAG, 'refreshArchetypeByPlayerId', res)
+    }
+  }
+
+  static async syncPlayerStatsByPlayerId(req: Request, res: Response) {
+    try {
+     const { playerId } = req.params
+
+     if (!playerId) {
+      Service.catchError(transl('error.no_id'), TAG, 'playerId-not-found', res)
+     }
+
+      const result = await playerService.syncPlayerStatsByPlayerId(playerId)
+      res.status(CODE.OK).send(Resp.Ok(result))
+    } catch (error) {
+      Service.catchError(error, TAG, 'syncAllStats', res)
+    }
+  }
+
+  static async syncAllStats(_req: Request, res: Response) {
+    try {
+      const result = await playerService.syncPlayerAllStats()
+      res.status(CODE.OK).send(Resp.Ok(result))
+    } catch (error) {
+      Service.catchError(error, TAG, 'syncAllStats', res)
+    }
   }
 }
