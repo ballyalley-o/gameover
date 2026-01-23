@@ -4,7 +4,6 @@ import { ErrorResponse } from 'middleware'
 import { playerInsertSchema } from 'db/validator/player'
 import { playerService } from 'service'
 import { feedService } from 'service/feed.service'
-import { statsService } from 'service/stats.service'
 import { transl } from 'utility'
 
 import { Service } from './service.controller'
@@ -98,26 +97,6 @@ export class PlayerController {
   static async remove(req: Request, res: Response) {
     await playerService.remove(req.params.id)
     res.status(CODE.OK).send(Resp.Ok({}))
-  }
-
-  static async refreshArchetype(_req: Request, res: Response) {
-    try {
-      const result = await playerService.refreshArchetype()
-      res.status(CODE.OK).send(Resp.Ok(result))
-    } catch (error) {
-      Service.catchError(error, TAG, 'refreshArchetype', res)
-    }
-  }
-
-  static async refreshArchetypeByPlayerId(req: Request, res: Response) {
-    try {
-      const { playerId } = req.params
-
-      const result = await statsService.refreshArchetypeByPlayerId(playerId)
-      res.status(CODE.OK).send(Resp.Ok(result))
-    } catch (error) {
-      Service.catchError(error, TAG, 'refreshArchetypeByPlayerId', res)
-    }
   }
 
   static async syncPlayerStatsByPlayerId(req: Request, res: Response) {
