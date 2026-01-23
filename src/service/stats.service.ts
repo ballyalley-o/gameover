@@ -2,11 +2,50 @@ import { db } from "config"
 import { eq } from "drizzle-orm"
 import { players } from "db/schema"
 
-const _clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n))
-const _scale = (value: number, min: number, max: number) => _clamp(((value - min) / (max - min)) * 100)
-const _toNumber = (value: number | null | undefined) => (typeof value === 'number' ? value : 0)
+const _clamp    = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n))
+const _scale    = (value: number, min: number, max: number) => _clamp(((value - min) / (max - min)) * 100)
+const _toNumber = (value: unknown) => {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) return Number(value)
+  return 0
+}
+
+const _pickStat = (row: Record<string, unknown>, keys: string[]) => {
+  for (const key of keys) {
+    const value = row[key]
+    if (value !== undefined && value !== null && value !== '') {
+      return _toNumber(value)
+    }
+  }
+  return 0
+}
 
 export const statsService = {
+    normalizeStats(stats: unknown): PlayerStatsType | null {
+        const row = Array.isArray(stats) ? stats[0] : stats
+        if (!row || typeof row !== 'object') return null
+        const record = row as Record<string, unknown>
+
+        return {
+            points                       : _pickStat(record, ['Points', 'points']),
+            assists                      : _pickStat(record, ['Assists', 'assists']),
+            rebounds                     : _pickStat(record, ['Rebounds', 'rebounds']),
+            offensiveRebounds            : _pickStat(record, ['OffensiveRebounds', 'offensiveRebounds']),
+            defensiveRebounds            : _pickStat(record, ['DefensiveRebounds', 'defensiveRebounds']),
+            steals                       : _pickStat(record, ['Steals', 'steals']),
+            blockedShots                 : _pickStat(record, ['BlockedShots', 'blockedShots']),
+            turnovers                    : _pickStat(record, ['Turnovers', 'turnovers']),
+            minutes                      : _pickStat(record, ['Minutes', 'minutes']),
+            trueShootingPercentage       : _pickStat(record, ['TrueShootingPercentage', 'trueShootingPercentage']),
+            effectiveFieldGoalsPercentage: _pickStat(record, ['EffectiveFieldGoalsPercentage', 'effectiveFieldGoalsPercentage']),
+            usageRatePercentage          : _pickStat(record, ['UsageRatePercentage', 'usageRatePercentage']),
+            playerEfficiencyRating       : _pickStat(record, ['PlayerEfficiencyRating', 'playerEfficiencyRating']),
+            assistsPercentage            : _pickStat(record, ['AssistsPercentage', 'assistsPercentage']),
+            plusMinus                    : _pickStat(record, ['PlusMinus', 'plusMinus']),
+            games                        : _pickStat(record, ['Games', 'games']),
+        }
+    },
+
     async deriveRatingsFromStats(stats: PlayerStatsType) {
         const points     = _scale(stats.points, 0, 30)
         const assists    = _scale(stats.assists, 0, 10)
@@ -58,7 +97,7 @@ export const statsService = {
         return ratings
     },
 
-    classifyArchetype(player: PlayerRatingType): ArchetypeType {
+    computeArchetypeFromRating(player: PlayerRatingType): ArchetypeType {
       const overall    = _toNumber(player.overall)
       const offense    = _toNumber(player.offense)
       const defense    = _toNumber(player.defense)
@@ -88,18 +127,18 @@ export const statsService = {
       }
 
       let best: ArchetypeType = 'utility'
-      let bestScore       = -1
+      let bestScore           = -1
       for (const [key, value] of Object.entries(scores)) {
         if (value > bestScore && key !== 'unknown') {
           bestScore = value
-          best = key as ArchetypeType
+          best      = key as ArchetypeType
         }
       }
 
       return best
     },
 
-    async refreshArchetype(): Promise<{ total: number; updated: number; unchanged: number }> {
+    async classifyArchtype(): Promise<{ total: number; updated: number; unchanged: number }> {
         const rows = await db
         .select({
             id        : players.id,
@@ -118,8 +157,8 @@ export const statsService = {
         .from(players)
 
         const updates = rows
-        .map((row) => ({ id: row.id, archetype: statsService.classifyArchetype(row), current: row.archetype }))
-        .filter((row) => row.archetype !== row.current)
+            .map((row) => ({ id: row.id, archetype: statsService.computeArchetypeFromRating(row), current: row.archetype }))
+            .filter((row) => row.archetype !== row.current)
 
         if (updates.length) {
         await db.transaction(async (tx) => {
@@ -136,7 +175,7 @@ export const statsService = {
         }
     },
 
-    async refreshArchetypeByPlayerId(playerId: string): Promise<{ total: number; updated: number; unchanged: number }> {
+    async classifyArchetypeByPlayerId(playerId: string): Promise<{ total: number; updated: number; unchanged: number }> {
         const rows = await db
         .select({
             id        : players.id,
@@ -155,8 +194,8 @@ export const statsService = {
         .from(players).where(eq(players.playerId, String(playerId)))
 
         const updates = rows
-        .map((row) => ({ id: row.id, archetype: statsService.classifyArchetype(row), current: row.archetype }))
-        .filter((row) => row.archetype !== row.current)
+            .map((row) => ({ id: row.id, archetype: statsService.computeArchetypeFromRating(row), current: row.archetype }))
+            .filter((row) => row.archetype !== row.current)
 
         if (updates.length) {
         await db.transaction(async (tx) => {
