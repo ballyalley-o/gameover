@@ -229,4 +229,20 @@ export class TeamController {
     await teamService.deleteRosterAll()
     res.status(CODE.NO_CONTENT).send(Resp.Ok({}))
   }
+
+  static async seedTeamAllContract(req: Request, res: Response) {
+    try {
+      const teamKey = typeof req.query.teamKey === 'string' ? req.query.teamKey.toUpperCase() : undefined
+
+      if (teamKey && !(teamKey in TEAM_ABBR_NBA)) {
+        res.status(CODE.BAD_REQUEST).json(Resp.Error(transl('error.invalid_team_abbr'), CODE.BAD_REQUEST))
+        return
+      }
+
+      const result = await teamService.seedContracts(teamKey)
+      res.status(CODE.OK).send(Resp.Ok(result))
+    } catch (error) {
+      Service.catchError(error, TAG, 'seedContracts', res)
+    }
+  }
 }
