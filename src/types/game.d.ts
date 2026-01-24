@@ -10,7 +10,7 @@ export type Archetype =
   | 'rebounder'
   | 'utility'
 
-export type StyleTag = 'pace' | 'defense' | 'spacing' | 'iso' | 'motion' | 'switchable' | 'half_court' | 'transition'
+export type StyleTagType = 'pace' | 'defense' | 'spacing' | 'iso' | 'motion' | 'switchable' | 'half_court' | 'transition'
 
 export interface Ratings {
   overall   ?: number
@@ -41,7 +41,7 @@ export interface Team {
   ownerUserId?: string | null
   name        : string
   market     ?: string
-  styleTags  ?: StyleTag[]
+  styleTags  ?: StyleTagType[]
 }
 
 export interface RosterEntry {
@@ -65,7 +65,7 @@ export interface Lineup {
   name      : string
   slots     : LineupSlot[]
   pacePref ?: number
-  styleTags?: StyleTag[]
+  styleTags?: StyleTagType[]
 }
 
 export interface ChemistryLink {
