@@ -66,9 +66,15 @@ export class Service {
   }
 
   public static catchError(error: any, tag: string, target: string, res: Response) {
-      goodlog.error(error?.message || error?.stack, tag, target)
-      const code = error instanceof ErrorResponse ? error?.code : CODE.BAD_REQUEST
-      res.status(code).send(Resp.Error(error?.message, code, error?.details))
+      const apiErrorMessage = error?.response?.data?.message || error?.data?.message || error?.message || RESPONSE.ERROR[400]
+      const statusCode      = error?.response?.status || error?.response?.data?.statusCode || error?.code || CODE.BAD_REQUEST
+
+      goodlog.error(apiErrorMessage || error?.stack, tag, target)
+
+      if (error?.response?.data) {
+        goodlog.error(JSON.stringify(error.response.data), tag, target)
+      }
+      res.status(statusCode).send(Resp.Error(apiErrorMessage, statusCode, error?.response?.data))
   }
 
   public static async createUser(data: any) {
@@ -89,7 +95,7 @@ export class Service {
         - At least one number (0–9)
         - At least one special character (e.g., !, @, #, $)
      */
-    const dataPassword    = String(data.password)
+    const dataPassword   = String(data.password)
     const PASSWORD_REGEX = new RegExp(REGEX.PASSWORD)
 
     if (!PASSWORD_REGEX.test(dataPassword)) {
