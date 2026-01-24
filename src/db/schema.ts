@@ -84,6 +84,8 @@ export const teams = pgTable('teams', {
   styleTags      : text('style_tags').array(),
   salaryCap      : integer('salary_cap').notNull().default(_SALARY_CAP_DEFAULT),
   hardCapActive  : boolean('hard_cap_active').notNull().default(false),
+  exceptionBudget: integer('exception_budget').notNull().default(0),
+  exceptionType  : varchar('exception_type', { length: 32 }),
   createdAt      : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
   updatedAt      : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
@@ -91,15 +93,17 @@ export const teams = pgTable('teams', {
 }))
 
 export const rosters = pgTable('rosters', {
-  id         : uuid('id').defaultRandom().primaryKey(),
-  inTeamId   : uuid('in_team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  exTeamId   : varchar('ex_team_id', { length: 64 }).references(() => teams.teamId, { onDelete: 'cascade' }),
-  playerId   : uuid('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
-  contractYrs: smallint('contract_years').notNull().default(1),
-  salary     : integer('salary').notNull().default(0),
-  isActive   : boolean('is_active').notNull().default(true),
-  createdAt  : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
-  updatedAt  : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+  id               : uuid('id').defaultRandom().primaryKey(),
+  inTeamId         : uuid('in_team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  exTeamId         : varchar('ex_team_id', { length: 64 }).references(() => teams.teamId, { onDelete: 'cascade' }),
+  playerId         : uuid('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
+  contractYrs      : smallint('contract_years').notNull().default(1),
+  contractStartYear: smallint('contract_start_year'),
+  salary           : integer('salary').notNull().default(0),
+  salaryByYear     : jsonb('salary_by_year').$type<number[]>(),
+  isActive         : boolean('is_active').notNull().default(true),
+  createdAt        : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  updatedAt        : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
   teamIdx     : index('idx_rosters_team').on(table.inTeamId),
   playerIdx   : index('idx_rosters_player').on(table.playerId),
