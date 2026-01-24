@@ -50,7 +50,7 @@ export class StatsController {
       const result = await playerService.syncPlayerStatsByPlayerId(playerId)
       res.status(CODE.OK).send(Resp.Ok(result))
     } catch (error) {
-      Service.catchError(error, TAG, 'syncAllStats', res)
+      Service.catchError(error, TAG, 'syncPlayerStatsByPlayerId', res)
     }
   }
 
@@ -59,7 +59,7 @@ export class StatsController {
       const result = await playerService.syncPlayerAllStats()
       res.status(CODE.OK).send(Resp.Ok(result))
     } catch (error) {
-      Service.catchError(error, TAG, 'syncAllStats', res)
+      Service.catchError(error, TAG, 'syncPlayerAllStats', res)
     }
   }
 }
