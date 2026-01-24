@@ -53,14 +53,16 @@ export const teamService = {
     const playerColumns = getTableColumns(players)
     const rows          = await db
       .select({
-        rosterId   : rosters.id,
-        inTeamId   : rosters.inTeamId,
-        exTeamId   : rosters.exTeamId,
-        playerId   : rosters.playerId,
-        contractYrs: rosters.contractYrs,
-        salary     : rosters.salary,
-        isActive   : rosters.isActive,
-        player     : playerColumns,
+        rosterId         : rosters.id,
+        inTeamId         : rosters.inTeamId,
+        exTeamId         : rosters.exTeamId,
+        playerId         : rosters.playerId,
+        contractYrs      : rosters.contractYrs,
+        contractStartYear: rosters.contractStartYear,
+        salary           : rosters.salary,
+        salaryByYear     : rosters.salaryByYear,
+        isActive         : rosters.isActive,
+        player           : playerColumns,
       })
       .from(rosters)
       .innerJoin(players, eq(rosters.playerId, players.id))
@@ -157,5 +159,72 @@ export const teamService = {
 
   async deleteRosterAll(): Promise<void> {
     await db.delete(rosters)
+  },
+
+  async seedContracts(teamKey?: string): Promise<{ teamsUpdated: number; rostersUpdated: number }> {
+    const minYears       = 1
+    const maxYears       = 4
+    const minSalary      = 1_000_000
+    const maxSalary      = 35_000_000
+    const minGrowth      = -0.05
+    const maxGrowth      = 0.08
+    const maxException   = 15_000_000
+    const exceptionTypes = ['trade_exception', 'mid_level', 'bi_annual']
+
+    const pickRandom = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)]
+    const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+    const randomFloat = (min: number, max: number) => Math.random() * (max - min) + min
+
+    const teamQuery = teamKey
+      ? db.select({ id: teams.id }).from(teams).where(eq(teams.key, teamKey))
+      : db.select({ id: teams.id }).from(teams)
+
+    const teamRows = await teamQuery
+    if (!teamRows.length) {
+      throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
+    }
+
+    const teamIds = teamRows.map((row) => row.id)
+    const rosterRows = await db
+      .select({ id: rosters.id, salary: rosters.salary, inTeamId: rosters.inTeamId })
+      .from(rosters)
+      .where(inArray(rosters.inTeamId, teamIds))
+
+    const seasonYear    = new Date().getFullYear()
+    const rosterUpdates = rosterRows.map((row) => {
+      const years        = randomInt(minYears, maxYears)
+      const baseSalary   = row.salary && row.salary > 0 ? row.salary : randomInt(minSalary, maxSalary)
+      const growth       = randomFloat(minGrowth, maxGrowth)
+      const salaryByYear = Array.from({ length: years }, (_, i) => Math.round(baseSalary * Math.pow(1 + growth, i)))
+      return {
+        id               : row.id,
+        contractStartYear: seasonYear,
+        contractYrs      : years,
+        salary           : salaryByYear[0] ?? baseSalary,
+        salaryByYear,
+      }
+    })
+
+    await db.transaction(async (tx) => {
+      for (const update of rosterUpdates) {
+        await tx
+          .update(rosters)
+          .set({
+            contractStartYear: update.contractStartYear,
+            contractYrs      : update.contractYrs,
+            salary           : update.salary,
+            salaryByYear     : update.salaryByYear,
+          })
+          .where(eq(rosters.id, update.id))
+      }
+
+      for (const teamId of teamIds) {
+        const budget        = randomInt(0, maxException)
+        const exceptionType = budget > 0 ? pickRandom(exceptionTypes) : null
+        await tx.update(teams).set({ exceptionBudget: budget, exceptionType }).where(eq(teams.id, teamId))
+      }
+    })
+
+    return { teamsUpdated: teamIds.length, rostersUpdated: rosterUpdates.length }
   }
 }
