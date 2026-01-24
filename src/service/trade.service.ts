@@ -4,35 +4,26 @@ import { CODE, RESPONSE, TRADE_STATUS } from 'constant'
 import { ErrorResponse } from 'middleware'
 import { players, rosters, teams, trades } from 'db/schema'
 
-const MATCH_THRESHOLD = 6_533_000
-const HIGH_MULT       = 1.25
-const LOW_MULT        = 1.75
-const BUFFER          = 100_000
 
-export interface TradePayload {
-  fromTeamId    : string
-  toTeamId      : string
-  outgoingIds   : string[]
-  incomingIds   : string[]
-}
+const MATCH_THRESHOLD   = 6_533_000
+const HIGH_MULT         = 1.25
+const LOW_MULT          = 1.75
+const BUFFER            = 100_000
+const CURRENT_SEASON = () => new Date().getFullYear()
 
-export interface TradePreview {
-  valid  : boolean
-  reason?: string
-  from   : { outgoing: number; incoming: number; allowedIncoming: number; postSalary: number; cap: number }
-  to     : { outgoing: number; incoming: number; allowedIncoming: number; postSalary: number; cap: number }
-}
+const toNumber = (value: number | null | undefined) => (typeof value === 'number' ? value : 0)
 
-export interface TradeSuggestionPayload {
-  fromTeamId     : string
-  toTeamId       : string
-  maxSuggestions?: number
-}
-
-export interface TradeSuggestion {
-  outgoing: Array<{ playerId: string; firstname: string | null; lastname: string | null; salary: number }>
-  incoming: Array<{ playerId: string; firstname: string | null; lastname: string | null; salary: number }>
-  preview : TradePreview
+const getContractSalary = (row: { salary: number | null; salaryByYear?: number[] | null; contractStartYear?: number | null }, seasonYear: number) => {
+  const baseSalary   = toNumber(row.salary)
+  const salaryByYear = row.salaryByYear ?? null
+  if (salaryByYear && salaryByYear.length) {
+    const startYear = row.contractStartYear ?? seasonYear
+    const index     = seasonYear - startYear
+    if (index >= 0 && index < salaryByYear.length) {
+      return toNumber(salaryByYear[index])
+    }
+  }
+  return baseSalary
 }
 
 const allowedIncoming = (outgoing: number) => {
@@ -42,31 +33,51 @@ const allowedIncoming = (outgoing: number) => {
     : outgoing * HIGH_MULT + BUFFER
 }
 
-const sumSalary = (rows: Array<{ salary: number | null }>) => rows.reduce((sum, row) => sum + (row.salary || 0), 0)
+const sumSalary = (rows: Array<{ salary: number | null; salaryByYear?: number[] | null; contractStartYear?: number | null }>, seasonYear: number) =>
+  rows.reduce((sum, row) => sum + getContractSalary(row, seasonYear), 0)
 
 const getTeamSalary = async (teamId: string) => {
-  const [res] = await db.select({ total: sql<number>`coalesce(sum(${rosters.salary}), 0)` }).from(rosters).where(eq(rosters.inTeamId, teamId))
-  return res?.total || 0
+  const seasonYear = CURRENT_SEASON()
+  const rows = await db
+    .select({
+      salary           : rosters.salary,
+      salaryByYear     : rosters.salaryByYear,
+      contractStartYear: rosters.contractStartYear,
+    })
+    .from(rosters)
+    .where(eq(rosters.inTeamId, teamId))
+  return sumSalary(rows, seasonYear)
 }
 
 const fetchRosterEntries = async (teamId: string, playerIds: string[]) => {
   if (!playerIds.length) return []
-  return db.select().from(rosters).where(and(eq(rosters.inTeamId, teamId), inArray(rosters.playerId, playerIds)))
+  return db
+    .select()
+    .from(rosters)
+    .where(and(eq(rosters.inTeamId, teamId), inArray(rosters.playerId, playerIds)))
 }
 
-const fetchRosterCandidates = async (teamId: string) => {
-  const rows = await db
+const fetchRosterAllCandidate = async (teamId: string) => {
+  const seasonYear = CURRENT_SEASON()
+  const rows       = await db
     .select({
-      playerId : rosters.playerId,
-      salary   : rosters.salary,
-      firstname: players.firstname,
-      lastname : players.lastname,
+      playerId         : rosters.playerId,
+      salary           : rosters.salary,
+      salaryByYear     : rosters.salaryByYear,
+      contractStartYear: rosters.contractStartYear,
+      firstname        : players.firstname,
+      lastname         : players.lastname,
     })
     .from(rosters)
     .innerJoin(players, eq(rosters.playerId, players.id))
     .where(eq(rosters.inTeamId, teamId))
 
-  return rows.map((row) => ({ ...row, salary: row.salary || 0 }))
+  return rows.map((row) => ({
+    playerId : row.playerId,
+    firstname: row.firstname,
+    lastname : row.lastname,
+    salary   : getContractSalary(row, seasonYear),
+  }))
 }
 
 const buildPreview = ({
@@ -79,17 +90,23 @@ const buildPreview = ({
   outgoingTo,
   incomingToTo,
 }: {
-  fromTeam: typeof teams.$inferSelect
-  toTeam: typeof teams.$inferSelect
+  fromTeam         : typeof teams.$inferSelect
+  toTeam           : typeof teams.$inferSelect
   fromCurrentSalary: number
-  toCurrentSalary: number
-  outgoingFrom: number
-  incomingToFrom: number
-  outgoingTo: number
-  incomingToTo: number
-}): TradePreview => {
-  const fromAllowed = allowedIncoming(outgoingFrom)
-  const toAllowed   = allowedIncoming(outgoingTo)
+  toCurrentSalary  : number
+  outgoingFrom     : number
+  incomingToFrom   : number
+  outgoingTo       : number
+  incomingToTo     : number
+})               : TradePreview => {
+  const fromBaseAllowed     = allowedIncoming(outgoingFrom)
+  const toBaseAllowed       = allowedIncoming(outgoingTo)
+  const fromExceptionBudget = fromTeam.exceptionBudget ?? 0
+  const toExceptionBudget   = toTeam.exceptionBudget ?? 0
+  const fromExceptionUsed   = Math.max(0, incomingToFrom - fromBaseAllowed)
+  const toExceptionUsed     = Math.max(0, incomingToTo - toBaseAllowed)
+  const fromAllowed         = fromBaseAllowed + fromExceptionBudget
+  const toAllowed           = toBaseAllowed + toExceptionBudget
 
   const fromPostSalary = fromCurrentSalary - outgoingFrom + incomingToFrom
   const toPostSalary   = toCurrentSalary - outgoingTo + incomingToTo
@@ -100,9 +117,15 @@ const buildPreview = ({
   if (incomingToFrom > fromAllowed) {
     valid = false
     reason = 'Incoming salary exceeds allowed matching for fromTeam'
+  } else if (fromExceptionUsed > fromExceptionBudget) {
+    valid = false
+    reason = 'From team trade exception is insufficient'
   } else if (incomingToTo > toAllowed) {
     valid = false
     reason = 'Incoming salary exceeds allowed matching for toTeam'
+  } else if (toExceptionUsed > toExceptionBudget) {
+    valid = false
+    reason = 'To team trade exception is insufficient'
   } else if (fromTeam.hardCapActive && fromPostSalary > fromTeam.salaryCap) {
     valid = false
     reason = 'From team exceeds hard cap'
@@ -114,8 +137,8 @@ const buildPreview = ({
   return {
     valid,
     reason: reason || undefined,
-    from  : { outgoing: outgoingFrom, incoming: incomingToFrom, allowedIncoming: fromAllowed, postSalary: fromPostSalary, cap: fromTeam.salaryCap },
-    to    : { outgoing: outgoingTo, incoming: incomingToTo, allowedIncoming: toAllowed, postSalary: toPostSalary, cap: toTeam.salaryCap },
+    from  : { outgoing: outgoingFrom, incoming: incomingToFrom, allowedIncoming: fromAllowed, postSalary: fromPostSalary, cap: fromTeam.salaryCap, exceptionBudget: fromExceptionBudget, exceptionUsed: fromExceptionUsed },
+    to    : { outgoing: outgoingTo, incoming: incomingToTo, allowedIncoming: toAllowed, postSalary: toPostSalary, cap: toTeam.salaryCap, exceptionBudget: toExceptionBudget, exceptionUsed: toExceptionUsed },
   }
 }
 
@@ -136,11 +159,12 @@ export const tradeService = {
       throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
     }
 
-    const outgoingFrom   = sumSalary(fromRoster)
-    const incomingToFrom = sumSalary(toRoster)
+    const seasonYear     = CURRENT_SEASON()
+    const outgoingFrom   = sumSalary(fromRoster, seasonYear)
+    const incomingToFrom = sumSalary(toRoster, seasonYear)
 
-    const outgoingTo   = sumSalary(toRoster)
-    const incomingToTo = sumSalary(fromRoster)
+    const outgoingTo   = sumSalary(toRoster, seasonYear)
+    const incomingToTo = sumSalary(fromRoster, seasonYear)
 
     const fromCurrentSalary = await getTeamSalary(fromTeamId)
     const toCurrentSalary   = await getTeamSalary(toTeamId)
@@ -162,12 +186,14 @@ export const tradeService = {
 
     const [fromTeam] = await db.select().from(teams).where(eq(teams.id, fromTeamId))
     const [toTeam]   = await db.select().from(teams).where(eq(teams.id, toTeamId))
+
     if (!fromTeam || !toTeam) throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
 
-    const [fromRoster, toRoster] = await Promise.all([ fetchRosterCandidates(fromTeamId), fetchRosterCandidates(toTeamId) ])
+    const [fromRoster, toRoster] = await Promise.all([ fetchRosterAllCandidate(fromTeamId), fetchRosterAllCandidate(toTeamId) ])
 
-    const fromCurrentSalary = sumSalary(fromRoster)
-    const toCurrentSalary   = sumSalary(toRoster)
+    const seasonYear        = CURRENT_SEASON()
+    const fromCurrentSalary = sumSalary(fromRoster, seasonYear)
+    const toCurrentSalary   = sumSalary(toRoster, seasonYear)
 
     const suggestions: TradeSuggestion[] = []
 
@@ -212,6 +238,20 @@ export const tradeService = {
     return db.transaction(async (tx) => {
       await tx.update(rosters).set({ inTeamId: toTeamId }).where(and(eq(rosters.inTeamId, fromTeamId), inArray(rosters.playerId, outgoingIds)))
       await tx.update(rosters).set({ inTeamId: fromTeamId }).where(and(eq(rosters.inTeamId, toTeamId), inArray(rosters.playerId, incomingIds)))
+
+      if (preview.from.exceptionUsed > 0) {
+        await tx
+          .update(teams)
+          .set({ exceptionBudget: sql<number>`${teams.exceptionBudget} - ${preview.from.exceptionUsed}` })
+          .where(eq(teams.id, fromTeamId))
+      }
+
+      if (preview.to.exceptionUsed > 0) {
+        await tx
+          .update(teams)
+          .set({ exceptionBudget: sql<number>`${teams.exceptionBudget} - ${preview.to.exceptionUsed}` })
+          .where(eq(teams.id, toTeamId))
+      }
 
       const [record] = await tx.insert(trades).values({
         fromTeamId,
