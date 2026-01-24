@@ -28,6 +28,8 @@ export const teamInsertSchema = createInsertSchema(teams, {
   styleTags      : () => z.array(z.string()),
   salaryCap      : () => z.number(),
   hardCapActive  : z.boolean().default(false),
+  exceptionBudget: () => z.number().int().nonnegative().default(0),
+  exceptionType  : (schema) => schema.max(32).optional(),
 })
 
 export const teamUpdateSchema = teamInsertSchema.partial()
