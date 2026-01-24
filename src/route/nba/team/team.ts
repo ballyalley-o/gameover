@@ -12,6 +12,7 @@ router.route(PATH_PARAM.ROOT)
 
 router
   .post(combinePathParam('create-basic'), protect, authorize('admin'), TeamController.createBasic)
+  .put(combinePathParam('contract', 'seed'), protect, authorize('admin'), TeamController.seedTeamAllContract)
 
 router.route(combinePathParam(':teamId'))
   .get(protect, TeamController.get)
