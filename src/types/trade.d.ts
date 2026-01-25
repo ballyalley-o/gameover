@@ -29,6 +29,24 @@ declare interface TradeSuggestionPayload {
   maxSuggestions?: number
 }
 
+declare interface TradeHistoryFilterTypes {
+  teamId?: string
+  limit ?: number
+  offset?: number
+}
+
+declare interface TradeHistoryItemType {
+  id            : string
+  fromTeamId    : string
+  toTeamId      : string
+  outgoingIds   : string[]
+  incomingIds   : string[]
+  outgoingSalary: number
+  incomingSalary: number
+  status        : string
+  createdAt     : Date
+}
+
 
 type TradePlayerSuggestionReturnType = { playerId: string; firstname: string | null; lastname: string | null; salary: number }
 declare interface TradeSuggestion {
