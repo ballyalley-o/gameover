@@ -34,6 +34,7 @@ export const PATH_PARAM = {
   CONTRACT    : 'contract',
   CREATE_BASIC: 'create-basic',
   EXECUTE     : 'execute',
+  HISTORY     : 'history',
   JSON        : 'json',
   LINEUP      : 'lineup',
   METRIC      : 'metric',
