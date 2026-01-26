@@ -1,5 +1,5 @@
 import { db } from 'gameover'
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, or, sql } from 'drizzle-orm'
 import { CODE, RESPONSE, TRADE_STATUS } from 'constant'
 import { ErrorResponse } from 'middleware'
 import { players, rosters, teams, trades } from 'db/schema'
@@ -244,8 +244,14 @@ export const tradeService = {
     if (!fromTeam || !toTeam) throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
 
     return db.transaction(async (tx) => {
-      await tx.update(rosters).set({ inTeamId: toTeamId }).where(and(eq(rosters.inTeamId, fromTeamId), inArray(rosters.playerId, outgoingIds)))
-      await tx.update(rosters).set({ inTeamId: fromTeamId }).where(and(eq(rosters.inTeamId, toTeamId), inArray(rosters.playerId, incomingIds)))
+      await tx
+        .update(rosters)
+        .set({ inTeamId: toTeamId, exTeamId: toTeam.teamId })
+        .where(and(eq(rosters.inTeamId, fromTeamId), inArray(rosters.playerId, outgoingIds)))
+      await tx
+        .update(rosters)
+        .set({ inTeamId: fromTeamId, exTeamId: fromTeam.teamId })
+        .where(and(eq(rosters.inTeamId, toTeamId), inArray(rosters.playerId, incomingIds)))
 
       if (preview.from.exceptionUsed > 0) {
         await tx
@@ -268,6 +274,8 @@ export const tradeService = {
         incomingIds,
         outgoingSalary: preview.from.outgoing,
         incomingSalary: preview.from.incoming,
+        fromExceptionUsed: preview.from.exceptionUsed,
+        toExceptionUsed  : preview.to.exceptionUsed,
         status        : TRADE_STATUS.PROCESSED,
       }).returning()
 
