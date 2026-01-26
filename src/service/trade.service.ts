@@ -103,8 +103,8 @@ const buildPreview = ({
   const toBaseAllowed       = allowedIncoming(outgoingTo)
   const fromExceptionBudget = fromTeam.exceptionBudget ?? 0
   const toExceptionBudget   = toTeam.exceptionBudget ?? 0
-  const fromExceptionUsed   = Math.max(0, incomingToFrom - fromBaseAllowed)
-  const toExceptionUsed     = Math.max(0, incomingToTo - toBaseAllowed)
+  const fromExceptionUsed   = Math.max(0, Math.ceil(incomingToFrom - fromBaseAllowed))
+  const toExceptionUsed     = Math.max(0, Math.ceil(incomingToTo - toBaseAllowed))
   const fromAllowed         = fromBaseAllowed + fromExceptionBudget
   const toAllowed           = toBaseAllowed + toExceptionBudget
 
