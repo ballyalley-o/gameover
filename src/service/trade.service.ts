@@ -234,6 +234,14 @@ export const tradeService = {
     }
 
     const { fromTeamId, toTeamId, outgoingIds, incomingIds } = payload
+    const teamRows = await db
+      .select({ id: teams.id, teamId: teams.teamId })
+      .from(teams)
+      .where(or(eq(teams.id, fromTeamId), eq(teams.id, toTeamId)))
+
+    const fromTeam = teamRows.find((team) => team.id === fromTeamId)
+    const toTeam   = teamRows.find((team) => team.id === toTeamId)
+    if (!fromTeam || !toTeam) throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
 
     return db.transaction(async (tx) => {
       await tx.update(rosters).set({ inTeamId: toTeamId }).where(and(eq(rosters.inTeamId, fromTeamId), inArray(rosters.playerId, outgoingIds)))
@@ -265,5 +273,84 @@ export const tradeService = {
 
       return { trade: record, preview }
     })
+  },
+
+  async history(filters: TradeHistoryFilterTypes = {}): Promise<TradeHistoryItemType[]> {
+    const { teamId, limit = 50, offset = 0 } = filters
+    const where = teamId ? or(eq(trades.fromTeamId, teamId), eq(trades.toTeamId, teamId)) : undefined
+
+    return db.select().from(trades).where(where).orderBy(desc(trades.createdAt)).limit(limit).offset(offset)
+  },
+
+  async resetHistory(teamId?: string): Promise<{ deleted: number; reverted: number }> {
+    const where     = teamId ? or(eq(trades.fromTeamId, teamId), eq(trades.toTeamId, teamId)) : undefined
+    const tradeRows = await db
+      .select({
+        id               : trades.id,
+        fromTeamId       : trades.fromTeamId,
+        toTeamId         : trades.toTeamId,
+        outgoingIds      : trades.outgoingIds,
+        incomingIds      : trades.incomingIds,
+        fromExceptionUsed: trades.fromExceptionUsed,
+        toExceptionUsed  : trades.toExceptionUsed,
+      })
+      .from(trades)
+      .where(where)
+      .orderBy(desc(trades.createdAt))
+
+    if (!tradeRows.length) {
+      return { deleted: 0, reverted: 0 }
+    }
+
+    const teamIds   = [...new Set(tradeRows.flatMap((row) => [row.fromTeamId, row.toTeamId]))]
+    const teamRows  = await db.select({ id: teams.id, teamId: teams.teamId }).from(teams).where(inArray(teams.id, teamIds))
+    const teamIdMap = new Map(teamRows.map((row) => [row.id, row.teamId]))
+
+    const result = await db.transaction(async (tx) => {
+      let reverted = 0
+      const exceptionRefunds = new Map<string, number>()
+      for (const trade of tradeRows) {
+        const fromExternal = teamIdMap.get(trade.fromTeamId)
+        const toExternal   = teamIdMap.get(trade.toTeamId)
+
+        if (trade.outgoingIds?.length) {
+          const updated = await tx
+            .update(rosters)
+            .set({ inTeamId: trade.fromTeamId, exTeamId: fromExternal })
+            .where(and(eq(rosters.inTeamId, trade.toTeamId), inArray(rosters.playerId, trade.outgoingIds)))
+            .returning({ id: rosters.id })
+          reverted += updated.length
+        }
+
+        if (trade.fromExceptionUsed > 0) {
+          exceptionRefunds.set(trade.fromTeamId, (exceptionRefunds.get(trade.fromTeamId) ?? 0) + trade.fromExceptionUsed)
+        }
+        if (trade.toExceptionUsed > 0) {
+          exceptionRefunds.set(trade.toTeamId, (exceptionRefunds.get(trade.toTeamId) ?? 0) + trade.toExceptionUsed)
+        }
+
+        if (trade.incomingIds?.length) {
+          const updated = await tx
+            .update(rosters)
+            .set({ inTeamId: trade.toTeamId, exTeamId: toExternal })
+            .where(and(eq(rosters.inTeamId, trade.fromTeamId), inArray(rosters.playerId, trade.incomingIds)))
+            .returning({ id: rosters.id })
+          reverted += updated.length
+        }
+      }
+
+      for (const [teamId, refund] of exceptionRefunds.entries()) {
+        if (refund <= 0) continue
+        await tx
+          .update(teams)
+          .set({ exceptionBudget: sql<number>`${teams.exceptionBudget} + ${refund}` })
+          .where(eq(teams.id, teamId))
+      }
+
+      const deleted = await tx.delete(trades).where(where).returning({ id: trades.id })
+      return { reverted, deleted: deleted.length }
+    })
+
+    return result
   },
 }
