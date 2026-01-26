@@ -171,8 +171,8 @@ export const teamService = {
     const maxException   = 15_000_000
     const exceptionTypes = ['trade_exception', 'mid_level', 'bi_annual']
 
-    const pickRandom = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)]
-    const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+    const pickRandom  = <T, >(items: T[]) => items[Math.floor(Math.random() * items.length)]
+    const randomInt   = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
     const randomFloat = (min: number, max: number) => Math.random() * (max - min) + min
 
     const teamQuery = teamKey
@@ -184,7 +184,7 @@ export const teamService = {
       throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
     }
 
-    const teamIds = teamRows.map((row) => row.id)
+    const teamIds    = teamRows.map((row) => row.id)
     const rosterRows = await db
       .select({ id: rosters.id, salary: rosters.salary, inTeamId: rosters.inTeamId })
       .from(rosters)
