@@ -185,15 +185,17 @@ export const gameEvents = pgTable('game_events', {
 }))
 
 export const trades = pgTable('trades', {
-  id            : uuid('id').defaultRandom().primaryKey(),
-  fromTeamId    : uuid('from_team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  toTeamId      : uuid('to_team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  outgoingIds   : jsonb('outgoing_player_ids').$type<string[]>().notNull(),
-  incomingIds   : jsonb('incoming_player_ids').$type<string[]>().notNull(),
-  outgoingSalary: integer('outgoing_salary').notNull(),
-  incomingSalary: integer('incoming_salary').notNull(),
-  status        : varchar('status', { length: 24 }).notNull().default('processed'),
-  createdAt     : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  id               : uuid('id').defaultRandom().primaryKey(),
+  fromTeamId       : uuid('from_team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  toTeamId         : uuid('to_team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  outgoingIds      : jsonb('outgoing_player_ids').$type<string[]>().notNull(),
+  incomingIds      : jsonb('incoming_player_ids').$type<string[]>().notNull(),
+  outgoingSalary   : integer('outgoing_salary').notNull(),
+  incomingSalary   : integer('incoming_salary').notNull(),
+  fromExceptionUsed: integer('from_exception_used').notNull().default(0),
+  toExceptionUsed  : integer('to_exception_used').notNull().default(0),
+  status           : varchar('status', { length: 24 }).notNull().default('processed'),
+  createdAt        : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
 }, (table) => ({
   fromIdx: index('idx_trades_from_team').on(table.fromTeamId),
   toIdx  : index('idx_trades_to_team').on(table.toTeamId),
