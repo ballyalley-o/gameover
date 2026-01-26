@@ -36,15 +36,17 @@ declare interface TradeHistoryFilterTypes {
 }
 
 declare interface TradeHistoryItemType {
-  id            : string
-  fromTeamId    : string
-  toTeamId      : string
-  outgoingIds   : string[]
-  incomingIds   : string[]
-  outgoingSalary: number
-  incomingSalary: number
-  status        : string
-  createdAt     : Date
+  id               : string
+  fromTeamId       : string
+  toTeamId         : string
+  outgoingIds      : string[]
+  incomingIds      : string[]
+  outgoingSalary   : number
+  incomingSalary   : number
+  fromExceptionUsed: number
+  toExceptionUsed  : number
+  status           : string
+  createdAt        : Date
 }
 
 
