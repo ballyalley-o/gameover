@@ -109,6 +109,88 @@ export const rosters = pgTable('rosters', {
   teamPlayerUq: uniqueIndex('uq_rosters_team_player').on(table.inTeamId, table.playerId),
 }))
 
+export const myLeagues = pgTable('my_leagues', {
+  id         : uuid('id').defaultRandom().primaryKey(),
+  name       : varchar('name', { length: 255 }).notNull(),
+  ownerUserId: uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
+  createdAt  : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  updatedAt  : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({
+  ownerIdx: index('idx_my_leagues_owner').on(table.ownerUserId),
+}))
+
+export const myLeagueTeams = pgTable('my_league_teams', {
+  id             : uuid('id').defaultRandom().primaryKey(),
+  leagueId       : uuid('league_id').notNull().references(() => myLeagues.id, { onDelete: 'cascade' }),
+  baseTeamId     : uuid('base_team_id').references(() => teams.id, { onDelete: 'set null' }),
+  ownerUserId    : uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
+  stadiumId      : smallint('stadium_id').unique(),
+  city           : varchar('city', { length: 100 }).notNull(),
+  name           : varchar('name', { length: 255 }).notNull(),
+  key            : varchar('key', { length: 3 }).notNull(),
+  conference     : conferenceEnum('conference'),
+  division       : divisionEnum('division'),
+  primaryColor   : varchar('primary_color', { length: 8 }),
+  secondaryColor : varchar('secondary_color', { length: 8 }),
+  tertiaryColor  : varchar('tertiary_color', { length: 8 }),
+  quaternaryColor: varchar('quaternary_color', { length: 8 }),
+  logoUrl        : varchar('logo_url', { length: 255 }),
+  wordmarkUrl    : varchar('wordmark_url', { length: 255 }),
+  createdAt      : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  updatedAt      : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({
+  leagueIdx : index('idx_my_league_teams_league').on(table.leagueId),
+  ownerIdx  : index('idx_my_league_teams_owner').on(table.ownerUserId),
+  leagueKey : uniqueIndex('uq_my_league_teams_league_key').on(table.leagueId, table.key),
+}))
+
+export const myLeaguePlayers = pgTable('my_league_players', {
+  id          : uuid('id').defaultRandom().primaryKey(),
+  leagueId    : uuid('league_id').notNull().references(() => myLeagues.id, { onDelete: 'cascade' }),
+  basePlayerId: uuid('base_player_id').references(() => players.id, { onDelete: 'set null' }),
+  playerId    : varchar('player_id', { length: 64 }).notNull(),
+  firstname   : varchar('first_name', { length: 255 }).notNull(),
+  lastname    : varchar('last_name', { length: 255 }).notNull(),
+  archetype   : archetypeEnum('archetype').default('unknown'),
+  positions   : positionEnum('positions').array().notNull(),
+  status      : statusEnum('status').default('Active'),
+  heightInches: smallint('height_inches'),
+  weightLbs   : smallint('weight_lbs'),
+  overall     : smallint('overall'),
+  offense     : smallint('offense'),
+  defense     : smallint('defense'),
+  rebounding  : smallint('rebounding'),
+  passing     : smallint('passing'),
+  iq          : smallint('iq'),
+  pace        : smallint('pace'),
+  clutch      : smallint('clutch'),
+  stamina     : smallint('stamina'),
+  salary      : integer('salary'),
+  injuryRisk  : varchar('injury_risk', { length: 16 }),
+  createdAt   : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  updatedAt   : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({
+  leagueIdx: index('idx_my_league_players_league').on(table.leagueId),
+  baseIdx  : index('idx_my_league_players_base').on(table.basePlayerId),
+}))
+
+export const myLeagueRosters = pgTable('my_league_rosters', {
+  id            : uuid('id').defaultRandom().primaryKey(),
+  leagueId      : uuid('league_id').notNull().references(() => myLeagues.id, { onDelete: 'cascade' }),
+  leagueTeamId  : uuid('league_team_id').notNull().references(() => myLeagueTeams.id, { onDelete: 'cascade' }),
+  leaguePlayerId: uuid('league_player_id').notNull().references(() => myLeaguePlayers.id, { onDelete: 'cascade' }),
+  draftRound    : smallint('draft_round'),
+  draftPick     : smallint('draft_pick'),
+  createdAt     : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  updatedAt     : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({
+  leagueIdx    : index('idx_my_league_rosters_league').on(table.leagueId),
+  teamIdx      : index('idx_my_league_rosters_team').on(table.leagueTeamId),
+  playerIdx    : index('idx_my_league_rosters_player').on(table.leaguePlayerId),
+  leaguePlayerUq: uniqueIndex('uq_my_league_rosters_league_player').on(table.leagueId, table.leaguePlayerId),
+  leagueTeamUq : uniqueIndex('uq_my_league_rosters_team_player').on(table.leagueTeamId, table.leaguePlayerId),
+}))
+
 export const lineups = pgTable('lineups', {
   id       : uuid('id').defaultRandom().primaryKey(),
   teamId   : uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
