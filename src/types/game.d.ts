@@ -27,7 +27,7 @@ export interface Ratings {
 export interface Player {
   id           : string
   name         : string
-  positions    : Position[]
+  positions    : PlayerPositionType[]
   archetype    : Archetype
   heightInches?: number
   weightLbs   ?: number
@@ -54,7 +54,7 @@ export interface RosterEntry {
 }
 
 export interface LineupSlot {
-  position  : Position
+  position  : PlayerPositionType
   playerId  : string
   minutesPct: number
 }
