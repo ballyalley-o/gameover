@@ -12,17 +12,13 @@ declare global {
         prev?: { page: number, limit: number }
         next?: { page: number, limit: number }
     }
-
+    declare type RouteLinkerType = (app: Application, apiVer: string) => void
     declare interface AdvancedResults {
       success    : boolean
       message   ?: string
       count      : number
       pagination : Pagination
       data       : unknown[]
-    }
-
-    declare interface IRequestUser extends Request {
-      user: { id  : string, role: Role }
     }
 
     declare interface DecodedToken {
