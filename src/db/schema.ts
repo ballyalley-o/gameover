@@ -2,7 +2,6 @@ import type { LineupSlot } from 'types/game'
 import { pgEnum, pgTable, boolean, index, integer, jsonb, smallint, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
 
 const  _SALARY_CAP_DEFAULT = 136000000
-export type PositionType   = 'PG'| 'SG' | 'SF' | 'PF' | 'C'
 
 export const positionEnum  = pgEnum('position', ['PG', 'SG', 'SF', 'PF', 'C'])
 export const archetypeEnum = pgEnum('archetype', [
