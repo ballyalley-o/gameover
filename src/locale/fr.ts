@@ -18,7 +18,10 @@ export const fr = {
     "invalid_email_format": "Format d'e-mail invalide (échec de la vérification Unicode)",
     "not_found": "INTROUVABLE : {field} introuvable",
     "failed_find": "Impossible de trouver le document demandé",
-    "no_id": "Aucune pièce d'identité ou pièce d'identité invalide fournie"
+    "no_id": "Aucune pièce d'identité ou pièce d'identité invalide fournie",
+    "no_or_invalid_api_version": "Version API non valide ou non valide",
+    "missing_or_invalid_api_version": "Version de l'API manquante ou invalide",
+    "failed_link_route": "[mainRoute] : échec de la liaison de l'itinéraire : {linker}"
   },
   "validation": {
     "default": {

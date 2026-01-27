@@ -18,7 +18,10 @@ export const es = {
     "invalid_email_format": "Formato de correo electrónico no válido (falló la verificación Unicode)",
     "not_found": "NO ENCONTRADO: {field} no encontrado",
     "failed_find": "No se pudo encontrar el documento solicitado",
-    "no_id": "No se ha proporcionado ninguna identificación o ésta no es válida"
+    "no_id": "No se ha proporcionado ninguna identificación o ésta no es válida",
+    "no_or_invalid_api_version": "Versión de API nula o no válida",
+    "missing_or_invalid_api_version": "Versión de API faltante o no válida",
+    "failed_link_route": "[mainRoute]: No se pudo vincular la ruta: {linker}"
   },
   "validation": {
     "default": {
