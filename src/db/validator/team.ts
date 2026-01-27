@@ -1,16 +1,20 @@
+import { z } from 'zod'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { teams } from 'db/schema'
-import { z } from 'zod'
 
 const conferenceEnum = z.enum(['Eastern', 'Western'])
 const divisionEnum   = z.enum(['Southeast', 'Central', 'Atlantic', 'Southwest', 'Northwest', 'Pacific'])
 const statusEnum     = z.enum(['Active', 'Inactive'])
+const optionalInt    = z.preprocess(
+  (value) => (value === null || value === undefined || value === '' ? undefined : value),
+  z.coerce.number().int()
+)
 
 export const teamSelectSchema = createSelectSchema(teams)
 export const teamInsertSchema = createInsertSchema(teams, {
   teamId         : () => z.union([z.string(), z.number()]).transform((v) => v.toString()),
   ownerUserId    : () => z.union([z.string(), z.number()]).transform((v) => v.toString()).optional(),
-  stadiumId      : () => z.union([z.string(), z.number()]).transform((v) => v.toString()).optional(),
+  stadiumId      : () => optionalInt.optional(),
   status         : statusEnum.default('Inactive'),
   city           : (schema) => schema.min(1).max(100),
   name           : (schema) => schema.min(1).max(255),
