@@ -13,6 +13,9 @@ declare type IndexType<T extends Record<string, number>> = {
 
 declare type Role                 = 'user' | 'admin'
 declare type ArchetypeType        = 'playmaker' | 'sharpshooter' | 'slasher' | 'two_way' | 'rim_protector' | 'stretch_big' | 'rebounder' | 'utility' | 'unknown'
+declare type PlayerPositionType   = 'PG' | 'SG' | 'SF' | 'PF' | 'C'
+declare type ConferenceType       = 'Eastern' | 'Western'
+declare type DivisionType         = 'Southeast' | 'Central' | 'Atlantic' | 'Southwest' | 'Northwest' | 'Pacific'
 declare type PasswordStrengthType = 'weak' | 'medium' | 'strong'
 
 declare type PlayerStatsType = {
