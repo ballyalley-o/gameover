@@ -1,4 +1,3 @@
-export type Position = 'PG' | 'SG' | 'SF' | 'PF' | 'C'
 
 export type Archetype =
   | 'playmaker'
