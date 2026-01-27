@@ -2,11 +2,12 @@ import { GLOBAL } from 'config/global'
 import { combine } from 'utility'
 
 export const MODULE = {
-  AUTH: 'auth',
-  USER: 'user',
-  NBA : 'nba',
-  FEED: 'feed',
-  GAME: 'game',
+  AUTH     : 'auth',
+  USER     : 'user',
+  NBA      : 'nba',
+  FEED     : 'feed',
+  GAME     : 'game',
+  MY_LEAGUE: 'myleague'
 }
 
 export const PATH_PARAM = {
@@ -34,9 +35,11 @@ export const PATH_PARAM = {
   CONTRACT    : 'contract',
   CREATE_BASIC: 'create-basic',
   EXECUTE     : 'execute',
+  DRAFT       : 'draft',
   HISTORY     : 'history',
   JSON        : 'json',
   LINEUP      : 'lineup',
+  MY_LEAGUE   : 'myleague',
   METRIC      : 'metric',
   PLAYER      : 'player',
   PREVIEW     : 'preview',
@@ -45,6 +48,7 @@ export const PATH_PARAM = {
   STATS       : 'stats',
   SUGGEST     : 'suggest',
   SYNC        : 'sync',
+  LEAGUE_ID   : ':leagueId',
   TEAM        : 'team',
   TRADE       : 'trade',
   ROSTER      : 'roster'
