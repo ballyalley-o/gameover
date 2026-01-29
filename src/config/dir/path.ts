@@ -49,6 +49,7 @@ export const PATH_PARAM = {
   SUGGEST     : 'suggest',
   SYNC        : 'sync',
   LEAGUE_ID   : ':leagueId',
+  MY_LEAGUE_ID: ':myLeagueId',
   TEAM        : 'team',
   TRADE       : 'trade',
   ROSTER      : 'roster'
