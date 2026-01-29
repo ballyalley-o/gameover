@@ -48,5 +48,9 @@ export const GLOBAL = {
   JWT_SECRET: process.env.JWT_SECRET || '',
   SALARY: {
     CAP_DEFAULT: Number(process.env.SALARY_CAP_DEFAULT) || 0
+  },
+  MY_LEAGUE: {
+    MAX_TEAM_PER_LEAGUE : 30,
+    MAX_LEAGUE_PER_OWNER: 5
   }
 }
