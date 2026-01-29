@@ -120,6 +120,13 @@
       "when": 1769416955012,
       "tag": "0016_myleague-added-stadium-id",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1769606209082,
+      "tag": "0017_myleague-added-private-flag",
+      "breakpoints": true
     }
   ]
 }
