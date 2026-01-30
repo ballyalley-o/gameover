@@ -9,7 +9,7 @@ import { authorize, protect } from 'middleware'
 const router = Router({ mergeParams: true })
 
 router.route(PATH_PARAM.ROOT)
-.get(protect, authorize('admin'), advanceResult(users, { select: userSelect, includeTotal: false }), UserController.getUsers)
+.get(protect, authorize('admin'), advanceResult(users, { select: userSelect, includeTotal: false }), UserController.getUserAll)
 .post(protect, authorize('admin'), UserController.createUser)
 
 router.route(combinePathParam(':id'))
