@@ -30,6 +30,7 @@ export const en = {
       required  : '{field} is required',
       unique    : '{field} already exists',
     },
-    password: "Password must be 8+ characters with at least one uppercase, lowercase, number, and symbol."
+    max_league_allowed_user: 'Max limit ({max}) allowed for leagues owned reached ',
+    password               : "Password must be 8+ characters with at least one uppercase, lowercase, number, and symbol."
   }
 }

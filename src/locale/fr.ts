@@ -31,6 +31,7 @@ export const fr = {
       "invalid": "{field} non valide",
       "unique": "{field} existe déjà"
     },
-    "password": "Le mot de passe doit comporter plus de 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole."
+    "password": "Le mot de passe doit comporter plus de 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole.",
+    "max_league_allowed_user": "Limite maximale ({max}) autorisée pour les ligues détenues atteinte"
   }
 } as const

@@ -31,6 +31,7 @@ export const es = {
       "invalid": "Inválida {field}",
       "unique": "{field} ya existe"
     },
-    "password": "La contraseña debe tener más de 8 caracteres con al menos una mayúscula, una minúscula, un número y un símbolo."
+    "password": "La contraseña debe tener más de 8 caracteres con al menos una mayúscula, una minúscula, un número y un símbolo.",
+    "max_league_allowed_user": "Se alcanzó el límite máximo ({max}) permitido para las ligas de propiedad."
   }
 } as const
