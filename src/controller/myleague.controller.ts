@@ -1,22 +1,73 @@
+import { db, GLOBAL } from 'gameover'
 import { Request, Response } from 'express'
-import { CODE, Resp } from 'constant'
+import { eq } from 'drizzle-orm'
+import { users } from 'db/schema'
 import { myLeagueService } from 'service'
+import { DrizzleUser } from 'types/schema'
+import { ErrorResponse } from 'middleware'
+import { CODE, Resp, RESPONSE } from 'constant'
+import { normalize, transl } from 'utility'
 
 import { Service } from './service.controller'
 
+const MAX_LEAGUE_PER_OWNER = GLOBAL.MY_LEAGUE.MAX_LEAGUE_PER_OWNER
 const TAG = 'MyLeague.Controller'
 export class MyLeagueController {
-  static async create(req: Request, res: Response) {
+  static async list(req: Request, res: Response): Promise<void> {
+    try {
+      const myLeagues = await myLeagueService.list({ name: req.query.name as string })
+      res.status(CODE.OK).send(Resp.Ok(myLeagues, myLeagues.length))
+    } catch (error) {
+      Service.catchError(error, TAG, 'get', res)
+    }
+  }
+
+  static async get(req: Request, res: Response): Promise<void> {
+    try {
+      const myLeague = await myLeagueService.getById(req.params.myLeagueId)
+      if (!myLeague) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+      res.status(CODE.OK).send(Resp.Ok(myLeague))
+    } catch (error) {
+      Service.catchError(error, TAG, 'getById', res)
+    }
+  }
+
+  // send request to join league
+  // add a  flag to my league creation if public or private; only admins can see all public/private myleagues
+
+  static async create(req: Request, res: Response): Promise<void> {
     try {
       const payload = typeof req.body === 'object' && req.body ? req.body : {}
       const { draft, ...leaguePayload } = payload
 
-      const created = await myLeagueService.create(leaguePayload)
       let draftResult = undefined
 
+      const authUserId = Service.getAuthUserId(req)
+      if (!authUserId) throw new ErrorResponse(RESPONSE.ERROR[401], CODE.UNAUTHORIZED)
+
+      const [user] = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, authUserId))
+      if (!user) throw new ErrorResponse(RESPONSE.ERROR[401], CODE.UNAUTHORIZED)
+
+      const isAdmin = normalize(user.role) === 'admin'
+
+      if (leaguePayload?.ownerUserId && leaguePayload.ownerUserId !== user.id) {
+        throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
+      }
+
+      const leagueCount = await myLeagueService.ownerLeagueCount(user as DrizzleUser)
+      if (leagueCount > MAX_LEAGUE_PER_OWNER && !isAdmin) {
+        throw new ErrorResponse(transl('validation.max_league_allowed_user', { max: 5 }), CODE.BAD_REQUEST)
+      }
+
+      if (isAdmin) {
+        leaguePayload.ownerUserId ??= user.id
+      }
+
+      const created = await myLeagueService.create(leaguePayload)
+
       if (draft && created.league?.id) {
-        const options = typeof draft === 'object' ? draft : {}
-        draftResult = await myLeagueService.draft(created.league.id, options)
+        const options     = typeof draft === 'object' ? draft : {}
+              draftResult = await myLeagueService.draft(created.league.id, options)
       }
 
       res.status(CODE.CREATED).send(Resp.Created({ ...created, draft: draftResult }))
@@ -28,10 +79,29 @@ export class MyLeagueController {
   static async draft(req: Request, res: Response) {
     try {
       const options = typeof req.body === 'object' && req.body ? req.body : {}
-      const result  = await myLeagueService.draft(req.params.leagueId, options)
+      const result = await myLeagueService.draft(req.params.leagueId, options)
       res.status(CODE.OK).send(Resp.Ok(result))
     } catch (error) {
       Service.catchError(error, TAG, 'draft', res)
+    }
+  }
+
+  static async deleteMyLeagueById(req: Request, res: Response): Promise<void> {
+    try {
+      const { myLeagueId } = req.params
+      await myLeagueService.remove(myLeagueId)
+      res.status(CODE.NO_CONTENT).send(Resp.Ok({}))
+    } catch (error) {
+      Service.catchError(error, TAG, 'deleteMyLeagueById', res)
+    }
+  }
+
+  static async deleteAll(req: Request, res: Response): Promise<void> {
+    try {
+      await myLeagueService.removeAll()
+      res.status(CODE.NO_CONTENT).send(Resp.Ok([]))
+    } catch (error) {
+      Service.catchError(error, TAG, 'deleteMyLeagueById', res)
     }
   }
 }
