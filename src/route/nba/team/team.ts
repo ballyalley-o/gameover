@@ -11,7 +11,7 @@ router.route(PATH_PARAM.ROOT)
   .delete(protect, authorize('admin'), TeamController.deleteTeamAll)
 
 router
-  .post(combinePathParam('create-basic'), protect, authorize('admin'), TeamController.createBasic)
+  .post(combinePathParam('create-lite'), protect, authorize('admin'), TeamController.createLite)
   .put(combinePathParam('contract', 'seed'), protect, authorize('admin'), TeamController.seedTeamAllContract)
 
 router.route(combinePathParam(':teamId'))
