@@ -1,5 +1,5 @@
-import { and, eq, ilike, sql } from 'drizzle-orm'
 import { db } from 'gameover'
+import { and, eq, ilike, sql } from 'drizzle-orm'
 import { ErrorResponse } from 'middleware'
 import { players } from 'db/schema'
 import type { DrizzlePlayer, NewDrizzlePlayer } from 'types/schema'
@@ -9,14 +9,8 @@ import { transl } from 'utility'
 import { feedService } from './feed.service'
 import { statsService } from './stats.service'
 
-export interface PlayerFilters {
-  fullname ?: string
-  archetype?: string
-  position ?: string
-}
-
 export const playerService = {
-  async list(filters: PlayerFilters = {}): Promise<DrizzlePlayer[]> {
+  async list(filters: PlayerFilter = {}): Promise<DrizzlePlayer[]> {
     const conditions = []
 
     const fullname = sql`concat(${players.firstname}, ' ', ${players.lastname})`
