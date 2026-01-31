@@ -111,7 +111,7 @@ export const rosters = pgTable('rosters', {
 
 export const myLeagues = pgTable('my_leagues', {
   id         : uuid('id').defaultRandom().primaryKey(),
-  name       : varchar('name', { length: 255 }).notNull(),
+  name       : varchar('name', { length: 255 }).notNull().unique(),
   ownerUserId: uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
   isPrivate  : boolean('is_private').notNull().default(true),
   createdAt  : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
