@@ -16,18 +16,32 @@ export class Service {
     return jwt.sign({ id: userId }, GLOBAL.JWT_SECRET, { expiresIn: GLOBAL.JWT_EXP })
   }
 
+  public static getAuthUserId(req: AppRequestAuthType): string | undefined {
+    const r = req
+    return r.user?.id ?? r.userId
+  }
+
+  public static async getAuthUser(userId: string) {
+    try {
+      const [user] = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, userId))
+      return user
+    } catch (error) {
+      throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+    }
+  }
+
   public static async matchPassword(hash: string, raw: string) {
     return argon2.verify(hash, raw)
   }
 
   public static async hashPassword(password: string) {
-     const hashedPassword = await argon2.hash(password, {
-       type       : argon2.argon2id,
-       memoryCost : GLOBAL.HASH.MEMORY_COST,
-       timeCost   : GLOBAL.HASH.TIME_COST,
-       parallelism: GLOBAL.HASH.PARALLELISM,
-     })
-     return hashedPassword
+    const hashedPassword = await argon2.hash(password, {
+      type       : argon2.argon2id,
+      memoryCost : GLOBAL.HASH.MEMORY_COST,
+      timeCost   : GLOBAL.HASH.TIME_COST,
+      parallelism: GLOBAL.HASH.PARALLELISM
+    })
+    return hashedPassword
   }
 
   public static async getResetPasswordToken() {
