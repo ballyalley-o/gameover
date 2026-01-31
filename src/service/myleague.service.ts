@@ -1,15 +1,14 @@
-import { db } from 'gameover'
-import { eq } from 'drizzle-orm'
+import { db, GLOBAL } from 'gameover'
+import { and, eq, ilike, or, sql } from 'drizzle-orm'
 import { myLeagues, myLeaguePlayers, myLeagueRosters, myLeagueTeams, players, teams } from 'db/schema'
 import { ErrorResponse } from 'middleware'
+import type { DrizzleMyLeague, DrizzleUser } from 'types/schema'
 import { CODE, RESPONSE } from 'constant'
-
+import { toNumber } from 'utility'
 
 const POSITION_ORDER: PlayerPositionType[]       = ['PG', 'SG', 'SF', 'PF', 'C']
 const DEFAULT_TARGETS: Record<PlayerPositionType, number> = { PG: 2, SG: 2, SF: 2, PF: 2, C: 2 }
-const MAX_TEAMS_PER_LEAGUE                       = 30
-
-const toNumber = (value: number | null | undefined) => (typeof value === 'number' ? value : 0)
+const MAX_TEAMS_PER_LEAGUE                       = GLOBAL.MY_LEAGUE.MAX_TEAM_PER_LEAGUE
 
 const shuffle = <T,>(items: T[]): T[] => {
   const arr = [...items]
@@ -74,47 +73,105 @@ const pickPlayer = (
   return picked
 }
 
+const TAG = 'MyLeague.Service'
 export const myLeagueService = {
+  async ownerLeagueCount(user: DrizzleUser): Promise<number> {
+    try {
+      const [row] = await db.select({ count: sql<number>`count(*)`}).from(myLeagues).where(eq(myLeagues.ownerUserId, user.id))
+      return Number(row?.count ?? 0)
+    } catch (error) {
+      throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
+    }
+  },
+
+  async list(user: Pick<DrizzleUser, 'id' | 'role'>, filters: MyLeagueFilter = {}): Promise<DrizzleMyLeague[]> {
+    try {
+      const conditions = [] as any[]
+      const isAdmin    = (user as any)?.role === 'admin'
+      if (!isAdmin) {
+        conditions.push(or(eq(myLeagues.isPrivate, false), eq(myLeagues.ownerUserId, user?.id)))
+      }
+
+      if (filters.name) {
+        conditions.push(ilike(myLeagues.name, `%${filters.name}%`))
+      }
+
+      const where = conditions.length ? and(...conditions) : undefined
+
+      return await db.select().from(myLeagues).where(where)
+    } catch (error) {
+      throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
+    }
+  },
+
+  async getById(myLeagueId: string): Promise<DrizzleMyLeague> {
+    try {
+      const [myLeague] = await db.select().from(myLeagues).where(eq(myLeagues.id, myLeagueId))
+      return myLeague
+    } catch (error) {
+      throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
+    }
+  },
+
   async create(payload: CreateMyLeaguePayloadType) {
-    const { name, ownerUserId, includeBaseTeams = true, teamCount, ownerTeam } = payload
+    const { name, isPrivate, includeBaseTeams = true, teamCount, ownerTeam, ownerUserId } = payload
     if (!name) {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
-    const [league] = await db.insert(myLeagues).values({ name, ownerUserId }).returning()
+    if (ownerTeam && !ownerTeam.teamId && !ownerTeam.teamKey) {
+      throw new ErrorResponse(RESPONSE.ERROR[422], CODE.UNPROCESSABLE_ENTITY)
+    }
 
-    const baseTeams = includeBaseTeams
-      ? await db
-          .select({
-            id             : teams.id,
-            city           : teams.city,
-            name           : teams.name,
-            key            : teams.key,
-            conference     : teams.conference,
-            division       : teams.division,
-            primaryColor   : teams.primaryColor,
-            secondaryColor : teams.secondaryColor,
-            tertiaryColor  : teams.tertiaryColor,
-            quaternaryColor: teams.quaternaryColor,
-            logoUrl        : teams.logoUrl,
-            wordmarkUrl    : teams.wordmarkUrl,
-          })
-          .from(teams)
-      : []
+    const [league] = await db.insert(myLeagues).values({ name, ownerUserId, isPrivate }).returning()
 
+    const teamSelect = {
+      id             : teams.id,
+      city           : teams.city,
+      name           : teams.name,
+      key            : teams.key,
+      conference     : teams.conference,
+      division       : teams.division,
+      primaryColor   : teams.primaryColor,
+      secondaryColor : teams.secondaryColor,
+      tertiaryColor  : teams.tertiaryColor,
+      quaternaryColor: teams.quaternaryColor,
+      logoUrl        : teams.logoUrl,
+      wordmarkUrl    : teams.wordmarkUrl,
+    }
+
+    const ownerTeamRows =
+      ownerTeam?.teamId || ownerTeam?.teamKey
+        ? await db
+            .select(teamSelect)
+            .from(teams)
+            .where(ownerTeam?.teamId ? eq(teams.teamId, ownerTeam.teamId) : eq(teams.key, String(ownerTeam?.teamKey ?? '').toUpperCase()))
+        : []
+
+    const ownerTeamRecord = ownerTeamRows[0]
+    if (ownerTeam && !ownerTeamRecord) {
+      throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
+    }
+
+    const baseTeams      = includeBaseTeams ? await db.select(teamSelect).from(teams) : []
     const ownerTeamCount = ownerTeam ? 1 : 0
     const maxBaseTeams   = Math.max(0, MAX_TEAMS_PER_LEAGUE - ownerTeamCount)
 
-    if (includeBaseTeams && teamCount && teamCount > maxBaseTeams) {
-      throw new ErrorResponse(`Max ${maxBaseTeams} base teams per league`, CODE.UNPROCESSABLE_ENTITY)
+    if (teamCount && teamCount > MAX_TEAMS_PER_LEAGUE) {
+      throw new ErrorResponse(`Max ${MAX_TEAMS_PER_LEAGUE} teams per league`, CODE.UNPROCESSABLE_ENTITY)
     }
 
-    const targetBaseCount = includeBaseTeams
-      ? Math.min(teamCount ?? baseTeams.length, maxBaseTeams)
-      : 0
-    const selectedBaseTeams = includeBaseTeams
-      ? shuffle(baseTeams).slice(0, targetBaseCount)
-      : []
+    const basePool = ownerTeamRecord ? baseTeams.filter((team) => team.id !== ownerTeamRecord.id) : baseTeams
+
+    const totalAvailable = basePool.length + ownerTeamCount
+    const desiredTotal   = Math.min(teamCount ?? totalAvailable, MAX_TEAMS_PER_LEAGUE)
+
+    if (!includeBaseTeams && desiredTotal > ownerTeamCount) {
+      throw new ErrorResponse('includeBaseTeams=false cannot exceed owner team count', CODE.UNPROCESSABLE_ENTITY)
+    }
+
+    const targetBaseCount   = includeBaseTeams ? Math.min(basePool.length, Math.max(0, desiredTotal - ownerTeamCount)) : 0
+    const selectedBaseTeams = includeBaseTeams ? shuffle(basePool).slice(0, targetBaseCount) : []
 
     const usedKeys = new Set(selectedBaseTeams.map((team) => team.key))
     const teamRows: Array<typeof myLeagueTeams.$inferInsert> = selectedBaseTeams.map((team) => ({
@@ -134,36 +191,32 @@ export const myLeagueService = {
       wordmarkUrl    : team.wordmarkUrl,
     }))
 
-    if (ownerTeam) {
-      if (!ownerTeam.city || !ownerTeam.name) {
-        throw new ErrorResponse(RESPONSE.ERROR[422], CODE.UNPROCESSABLE_ENTITY)
-      }
-
-      const keySource = ownerTeam.key ?? `${ownerTeam.city}${ownerTeam.name}`
-      const key       = buildTeamKey(keySource, usedKeys)
+    if (ownerTeamRecord) {
+      const key = usedKeys.has(ownerTeamRecord.key) ? buildTeamKey(ownerTeamRecord.key, usedKeys) : ownerTeamRecord.key
+      usedKeys.add(key)
       teamRows.push({
-        leagueId       : league.id,
-        baseTeamId     : null,
-        ownerUserId    : ownerUserId ?? null,
-        city           : ownerTeam.city,
-        name           : ownerTeam.name,
+        leagueId   : league.id,
+        baseTeamId : ownerTeamRecord.id,
+        ownerUserId: ownerUserId ?? null,
+        city       : ownerTeamRecord.city,
+        name       : ownerTeamRecord.name,
         key,
-        conference     : ownerTeam.conference as ConferenceType,
-        division       : ownerTeam.division as DivisionType,
-        primaryColor   : ownerTeam.primaryColor ?? null,
-        secondaryColor : ownerTeam.secondaryColor ?? null,
-        tertiaryColor  : ownerTeam.tertiaryColor ?? null,
-        quaternaryColor: ownerTeam.quaternaryColor ?? null,
-        logoUrl        : ownerTeam.logoUrl ?? null,
-        wordmarkUrl    : ownerTeam.wordmarkUrl ?? null,
+        conference     : ownerTeamRecord.conference,
+        division       : ownerTeamRecord.division,
+        primaryColor   : ownerTeamRecord.primaryColor ?? null,
+        secondaryColor : ownerTeamRecord.secondaryColor ?? null,
+        tertiaryColor  : ownerTeamRecord.tertiaryColor ?? null,
+        quaternaryColor: ownerTeamRecord.quaternaryColor ?? null,
+        logoUrl        : ownerTeamRecord.logoUrl ?? null,
+        wordmarkUrl    : ownerTeamRecord.wordmarkUrl ?? null,
       })
     }
 
-    if (teamRows.length + ownerTeamCount > MAX_TEAMS_PER_LEAGUE) {
+    if (teamRows.length > MAX_TEAMS_PER_LEAGUE) {
       throw new ErrorResponse(`Max ${MAX_TEAMS_PER_LEAGUE} teams per league`, CODE.UNPROCESSABLE_ENTITY)
     }
 
-    if (!teamRows.length && !ownerTeam) {
+    if (!teamRows.length && !ownerTeamRecord) {
       throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
     }
 
@@ -171,26 +224,26 @@ export const myLeagueService = {
 
     const basePlayers = await db
       .select({
-        id         : players.id,
-        playerId   : players.playerId,
-        firstname  : players.firstname,
-        lastname   : players.lastname,
-        archetype  : players.archetype,
-        positions  : players.positions,
-        status     : players.status,
+        id          : players.id,
+        playerId    : players.playerId,
+        firstname   : players.firstname,
+        lastname    : players.lastname,
+        archetype   : players.archetype,
+        positions   : players.positions,
+        status      : players.status,
         heightInches: players.heightInches,
-        weightLbs  : players.weightLbs,
-        overall    : players.overall,
-        offense    : players.offense,
-        defense    : players.defense,
-        rebounding : players.rebounding,
-        passing    : players.passing,
-        iq         : players.iq,
-        pace       : players.pace,
-        clutch     : players.clutch,
-        stamina    : players.stamina,
-        salary     : players.salary,
-        injuryRisk : players.injuryRisk,
+        weightLbs   : players.weightLbs,
+        overall     : players.overall,
+        offense     : players.offense,
+        defense     : players.defense,
+        rebounding  : players.rebounding,
+        passing     : players.passing,
+        iq          : players.iq,
+        pace        : players.pace,
+        clutch      : players.clutch,
+        stamina     : players.stamina,
+        salary      : players.salary,
+        injuryRisk  : players.injuryRisk,
       })
       .from(players)
 
@@ -236,14 +289,13 @@ export const myLeagueService = {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
-    const leagueTeams = await db
-      .select({ id: myLeagueTeams.id })
-      .from(myLeagueTeams)
-      .where(eq(myLeagueTeams.leagueId, leagueId))
+    const leagueTeams = await db.select({ id: myLeagueTeams.id }).from(myLeagueTeams).where(eq(myLeagueTeams.leagueId, leagueId))
 
     if (!leagueTeams.length) {
       throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
     }
+
+    // validate the invite/request key
 
     if (leagueTeams.length > MAX_TEAMS_PER_LEAGUE) {
       throw new ErrorResponse(`Max ${MAX_TEAMS_PER_LEAGUE} teams per league`, CODE.UNPROCESSABLE_ENTITY)
@@ -276,7 +328,7 @@ export const myLeagueService = {
       throw new ErrorResponse(RESPONSE.ERROR[422], CODE.UNPROCESSABLE_ENTITY)
     }
 
-    const starThreshold = Math.max(0, Math.floor(options.starThreshold ?? 90))
+    const starThreshold   = Math.max(0, Math.floor(options.starThreshold ?? 90))
     const maxStarsPerTeam = Math.max(0, Math.floor(options.maxStarsPerTeam ?? 1))
 
     const available: DraftPlayerType[] = leaguePlayers.map((player) => ({
@@ -291,9 +343,13 @@ export const myLeagueService = {
     const bonusTeams        = Math.min(
       Math.max(0, Math.floor(options.bonusStarTeams ?? defaultBonusTeams)),
       teamCount,
-      Math.max(0, starPoolCount - maxStarsPerTeam * teamCount),
+      Math.max(0, starPoolCount - maxStarsPerTeam * teamCount)
     )
-    const bonusTeamIds = new Set(shuffle(leagueTeams).slice(0, bonusTeams).map((team) => team.id))
+    const bonusTeamIds = new Set(
+      shuffle(leagueTeams)
+        .slice(0, bonusTeams)
+        .map((team) => team.id)
+    )
 
     const teamStars      = new Map<string, number>()
     const teamStarLimits = new Map<string, number>()
@@ -303,12 +359,13 @@ export const myLeagueService = {
     }
 
     const variance = Math.max(1, Math.floor(options.draftVariance ?? 4))
+    // create interface/type for this
     const rosterRows: Array<{
-      leagueId: string
-      leagueTeamId: string
+      leagueId      : string
+      leagueTeamId  : string
       leaguePlayerId: string
-      draftRound: number
-      draftPick: number
+      draftRound    : number
+      draftPick     : number
     }> = []
 
     let pickNumber = 1
@@ -359,11 +416,55 @@ export const myLeagueService = {
 
     return {
       leagueId,
-      teams     : teamCount,
+      teams: teamCount,
       rosterSize,
-      drafted   : result,
-      unassigned: Math.max(0, leaguePlayers.length - result),
+      drafted       : result,
+      unassigned    : Math.max(0, leaguePlayers.length - result),
       bonusStarTeams: bonusTeams,
     }
   },
+
+  async updateMyLeagueById(myLeagueId: string, data: Partial<DrizzleMyLeague>) {
+    try {
+      if (!myLeagueId) {
+        throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
+      }
+
+      const [myLeagueExist] = await db.select({ id: myLeagues.id }).from(myLeagues).where(eq(myLeagues.id, myLeagueId))
+      if (!myLeagueExist) {
+        throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+      }
+
+      const { id, ownerUserId, createdAt, updatedAt, ...restOfUpdates } = (data ?? {}) as any
+      const cleanUpdates                                                = Object.fromEntries(Object.entries(restOfUpdates).filter(([, v]) => v !== undefined)) as Partial<DrizzleMyLeague>
+      const [updatedMyLeague]                                           = await db.update(myLeagues).set({ ...cleanUpdates, updatedAt: new Date() } as any).where(eq(myLeagues.id, myLeagueId)).returning()
+
+      if (!updatedMyLeague) {
+        throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
+      }
+
+      return updatedMyLeague
+    } catch (error) {
+      if (error instanceof ErrorResponse) {
+        throw error
+      }
+      throw new ErrorResponse(RESPONSE.ERROR[500], CODE.INTERNAL_SERVER_ERROR)
+    }
+  },
+
+  async remove(myLeagueId: string): Promise<void> {
+    try {
+      await db.delete(myLeagues).where(eq(myLeagues.id, myLeagueId))
+    } catch (error) {
+      throw new ErrorResponse((error as ErrorResponse)?.message, CODE.INTERNAL_SERVER_ERROR, CODE.INTERNAL_SERVER_ERROR)
+    }
+  },
+
+   async removeAll(): Promise<void> {
+    try {
+      await db.delete(myLeagues)
+    } catch (error) {
+      throw new ErrorResponse((error as ErrorResponse)?.message, CODE.INTERNAL_SERVER_ERROR, CODE.INTERNAL_SERVER_ERROR)
+    }
+  }
 }
