@@ -1,20 +1,16 @@
 import { db } from "config"
 import { and, eq } from "drizzle-orm"
 import { players } from "db/schema"
+import { stringToNumber } from "utility"
 
-const _clamp    = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n))
-const _scale    = (value: number, min: number, max: number) => _clamp(((value - min) / (max - min)) * 100)
-const _toNumber = (value: unknown) => {
-  if (typeof value === 'number') return value
-  if (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) return Number(value)
-  return 0
-}
+const _clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n))
+const _scale = (value: number, min: number, max: number) => _clamp(((value - min) / (max - min)) * 100)
 
 const _pickStat = (row: Record<string, unknown>, keys: string[]) => {
   for (const key of keys) {
     const value = row[key]
     if (value !== undefined && value !== null && value !== '') {
-      return _toNumber(value)
+      return stringToNumber(value)
     }
   }
   return 0
@@ -98,15 +94,15 @@ export const statsService = {
     },
 
     computeArchetypeFromRating(player: PlayerRatingType): ArchetypeType {
-      const overall    = _toNumber(player.overall)
-      const offense    = _toNumber(player.offense)
-      const defense    = _toNumber(player.defense)
-      const rebounding = _toNumber(player.rebounding)
-      const passing    = _toNumber(player.passing)
-      const iq         = _toNumber(player.iq)
-      const pace       = _toNumber(player.pace)
-      const clutch     = _toNumber(player.clutch)
-      const stamina    = _toNumber(player.stamina)
+      const overall    = stringToNumber(player.overall)
+      const offense    = stringToNumber(player.offense)
+      const defense    = stringToNumber(player.defense)
+      const rebounding = stringToNumber(player.rebounding)
+      const passing    = stringToNumber(player.passing)
+      const iq         = stringToNumber(player.iq)
+      const pace       = stringToNumber(player.pace)
+      const clutch     = stringToNumber(player.clutch)
+      const stamina    = stringToNumber(player.stamina)
 
       const hasStats = [overall, offense, defense, rebounding, passing, iq, pace, clutch, stamina].some((value) => value > 0)
       if (!hasStats) return 'unknown'
