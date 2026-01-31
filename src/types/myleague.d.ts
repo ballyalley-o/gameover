@@ -1,20 +1,16 @@
+declare type MyLeagueFilter = {
+  name?: string
+}
+
 declare type OwnerTeamInputType = {
-  city            : string
-  name            : string
-  key            ?: string
-  conference     ?: string | null
-  division       ?: string | null
-  primaryColor   ?: string | null
-  secondaryColor ?: string | null
-  tertiaryColor  ?: string | null
-  quaternaryColor?: string | null
-  logoUrl        ?: string | null
-  wordmarkUrl    ?: string | null
+  teamId ?: string
+  teamKey?: string
 }
 
 declare type CreateMyLeaguePayloadType = {
   name             : string
   ownerUserId     ?: string
+  isPrivate       ?: boolean
   includeBaseTeams?: boolean
   teamCount       ?: number
   ownerTeam       ?: OwnerTeamInputType
