@@ -18,6 +18,12 @@ declare type ConferenceType       = 'Eastern' | 'Western'
 declare type DivisionType         = 'Southeast' | 'Central' | 'Atlantic' | 'Southwest' | 'Northwest' | 'Pacific'
 declare type PasswordStrengthType = 'weak' | 'medium' | 'strong'
 
+declare type PlayerFilter = {
+  fullname ?: string
+  archetype?: string
+  position ?: string
+}
+
 declare type PlayerStatsType = {
   points                       : number
   assists                      : number
