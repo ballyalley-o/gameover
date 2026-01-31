@@ -5,5 +5,7 @@ import { StatsController } from 'controller'
 
 const router = Router({ mergeParams: true })
 
-router.put(combinePathParam('archetype', 'classify'), protect, authorize('admin'), StatsController.classifyArchtype)
-router.put(combinePathParam('archetype', 'classify', ':playerId'), protect, authorize('admin'), StatsController.classifyArchetypeByPlayerId)
+router.put(combinePathParam('classify'), protect, authorize('admin'), StatsController.classifyArchtype)
+router.put(combinePathParam('classify', ':playerId'), protect, authorize('admin'), StatsController.classifyArchetypeByPlayerId)
+
+export default router
