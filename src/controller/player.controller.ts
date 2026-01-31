@@ -34,44 +34,48 @@ export class PlayerController {
     res.status(CODE.CREATED).send(Resp.Created(created))
   }
 
-  static async createBasic(_req: Request, res: Response): Promise<void> {
-    const players = await feedService.getPlayerDetailAll()
-    if (!Array.isArray(players)) {
-      res.status(CODE.BAD_REQUEST).json(Resp.Error(transl('error.invalid_data_response')))
-      return
-    }
-
-    const playersToInsert = []
-    let   _errors         = []
-    for (const _p of players) {
-      try {
-        const parsed = playerInsertSchema.parse({
-          playerId    : _p.PlayerID,
-          firstName   : _p.FirstName,
-          lastName    : _p.LastName,
-          positions   : _p.Position ? [_p.Position]: [],
-          heightInches: _p.Height,
-          weightLbs   : _p.Weight,
-          salary      : _p.Salary,
-          archetype   : _p.Archetype ? _p.Archetype: 'unknown'
-        })
-
-        playersToInsert.push(parsed)
-
-      } catch (error) {
-        console.log('failed to insert:', error)
-        _errors.push(error)
+  static async createLite(_req: Request, res: Response): Promise<void> {
+    try {
+      const players = await feedService.getPlayerDetailAll()
+      if (!Array.isArray(players)) {
+        res.status(CODE.BAD_REQUEST).json(Resp.Error(transl('error.invalid_data_response')))
+        return
       }
-    }
 
-    for (const _payload of playersToInsert) {
-      await playerService.create(_payload)
-    }
+      const playersToInsert = []
+      let   _errors         = []
+      for (const _p of players) {
+        try {
+          const parsed = playerInsertSchema.parse({
+            playerId    : _p.PlayerID,
+            firstName   : _p.FirstName,
+            lastName    : _p.LastName,
+            positions   : _p.Position ? [_p.Position]: [],
+            heightInches: _p.Height,
+            weightLbs   : _p.Weight,
+            salary      : _p.Salary,
+            archetype   : _p.Archetype ? _p.Archetype: 'unknown'
+          })
 
-    if (playersToInsert.length <= 0) {
-      throw new Error('unable to create')
+          playersToInsert.push(parsed)
+
+        } catch (error) {
+          console.log('failed to insert:', error)
+          _errors.push(error)
+        }
+      }
+
+      for (const _payload of playersToInsert) {
+        await playerService.create(_payload)
+      }
+
+      if (playersToInsert.length <= 0) {
+        throw new Error('unable to create')
+      }
+      res.status(CODE.CREATED).send(Resp.Created({ inserted: playersToInsert.length }))
+    } catch (error) {
+      Service.catchError(error, TAG, 'createLite', res)
     }
-    res.status(CODE.CREATED).send(Resp.Created({ inserted: playersToInsert.length }))
   }
 
   static async update(req: Request, res: Response) {

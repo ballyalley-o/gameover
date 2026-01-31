@@ -33,51 +33,55 @@ export class TeamController {
     res.status(CODE.CREATED).send(Resp.Created(created))
   }
 
-  static async createBasic(_req: Request, res: Response): Promise<void> {
-    const teams = await feedService.getTeamActiveAll()
-    if (!Array.isArray(teams)) {
-      res.status(CODE.BAD_REQUEST).json(Resp.Error(transl('error.invalid_data_response')))
-      return
-    }
-
-    const teamsToInsert = []
-    let   _errors       = []
-    for (const _t of teams) {
-      try {
-        const parsed = teamInsertSchema.parse({
-          status         : _t.Active ? 'Active' : 'Inactive',
-          teamId         : _t.TeamID,
-          stadiumId      : _t.StadiumID,
-          key            : _t.Key,
-          city           : _t.City,
-          name           : _t.Name,
-          conference     : _t.Conference,
-          division       : _t.Division,
-          primaryColor   : _t.PrimaryColor,
-          secondaryColor : _t.SecondaryColor,
-          tertiaryColor  : _t.TertiaryColor,
-          quaternaryColor: _t.QuaternaryColor,
-          logoUrl        : _t.WikipediaLogoUrl,
-          wordmarkUrl    : _t.WikipediaWordMarkUrl,
-          headcoach      : _t.HeadCoach,
-        })
-
-        teamsToInsert.push(parsed)
-
-      } catch (error) {
-        console.log('failed to insert:', error)
-        _errors.push(error)
+  static async createLite(_req: Request, res: Response): Promise<void> {
+    try {
+        const teams = await feedService.getTeamActiveAll()
+      if (!Array.isArray(teams)) {
+        res.status(CODE.BAD_REQUEST).json(Resp.Error(transl('error.invalid_data_response')))
+        return
       }
-    }
 
-    for (const _payload of teamsToInsert) {
-      await teamService.create(_payload)
-    }
+      const teamsToInsert = []
+      let   _errors       = []
+      for (const _t of teams) {
+        try {
+          const parsed = teamInsertSchema.parse({
+            status         : _t.Active ? 'Active' : 'Inactive',
+            teamId         : _t.TeamID,
+            stadiumId      : _t.StadiumID,
+            key            : _t.Key,
+            city           : _t.City,
+            name           : _t.Name,
+            conference     : _t.Conference,
+            division       : _t.Division,
+            primaryColor   : _t.PrimaryColor,
+            secondaryColor : _t.SecondaryColor,
+            tertiaryColor  : _t.TertiaryColor,
+            quaternaryColor: _t.QuaternaryColor,
+            logoUrl        : _t.WikipediaLogoUrl,
+            wordmarkUrl    : _t.WikipediaWordMarkUrl,
+            headcoach      : _t.HeadCoach,
+          })
 
-    if (teamsToInsert.length <= 0) {
-      throw new Error('unable to create')
+          teamsToInsert.push(parsed)
+
+        } catch (error) {
+          console.log('failed to insert:', error)
+          _errors.push(error)
+        }
+      }
+
+      for (const _payload of teamsToInsert) {
+        await teamService.create(_payload)
+      }
+
+      if (teamsToInsert.length <= 0) {
+        throw new Error('unable to create')
+      }
+      res.status(CODE.CREATED).send(Resp.Created({ inserted: teamsToInsert.length }))
+    } catch (error) {
+      Service.catchError(error, TAG, 'createLite', res)
     }
-    res.status(CODE.CREATED).send(Resp.Created({ inserted: teamsToInsert.length }))
   }
 
 
