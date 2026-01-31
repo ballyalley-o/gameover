@@ -1,5 +1,5 @@
-import { en, fr, es } from 'locale'
 import { Request, Response, NextFunction } from 'express'
+import { en, fr, es } from 'locale'
 
 declare global {
     declare type RequestHandler = (req : Request, res : Response, next: NextFunction) => void
@@ -27,7 +27,14 @@ declare global {
       exp: number
     }
 
-    declare type AsyncHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>
+    declare type AsyncHandler      = (req: Request, res: Response, next: NextFunction) => Promise<void>
+    declare type AppResponseOkType = {
+      success: boolean,
+      code   : number,
+      message: string,
+      count  : number | null | undefined,
+      data   : unknown
+    }
 
     declare namespace Express {
         interface Request {
@@ -39,6 +46,10 @@ declare global {
         interface Response {
           advanceResult: AdvancedResults
         }
+    }
+
+    declare type AppRequestAuthType = Express.Request & {
+      userId?: string
     }
 
 }
