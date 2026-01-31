@@ -11,6 +11,7 @@ import { normalize, transl } from 'utility'
 import { Service } from './service.controller'
 
 const MAX_LEAGUE_PER_OWNER = GLOBAL.MY_LEAGUE.MAX_LEAGUE_PER_OWNER
+
 const TAG = 'MyLeague.Controller'
 export class MyLeagueController {
   static async list(req: Request, res: Response): Promise<void> {
