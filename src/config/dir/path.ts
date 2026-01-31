@@ -33,7 +33,7 @@ export const PATH_PARAM = {
   BULK        : 'bulk',
   CLASSIFY    : 'classify',
   CONTRACT    : 'contract',
-  CREATE_BASIC: 'create-basic',
+  CREATE_LITE : 'create-lite',
   EXECUTE     : 'execute',
   DRAFT       : 'draft',
   HISTORY     : 'history',
