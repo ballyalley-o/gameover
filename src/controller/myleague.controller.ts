@@ -16,7 +16,11 @@ const TAG = 'MyLeague.Controller'
 export class MyLeagueController {
   static async list(req: Request, res: Response): Promise<void> {
     try {
-      const myLeagues = await myLeagueService.list({ name: req.query.name as string })
+      const userId    = Service.getAuthUserId(req)
+      const user      = await Service.getAuthUser(userId ?? '')
+
+      if (!user) throw new ErrorResponse(RESPONSE.ERROR[401], CODE.UNAUTHORIZED)
+      const myLeagues = await myLeagueService.list(user, { name: req.query.name as string })
       res.status(CODE.OK).send(Resp.Ok(myLeagues, myLeagues.length))
     } catch (error) {
       Service.catchError(error, TAG, 'get', res)
@@ -33,9 +37,8 @@ export class MyLeagueController {
     }
   }
 
+  // invite users to join
   // send request to join league
-  // add a  flag to my league creation if public or private; only admins can see all public/private myleagues
-
   static async create(req: Request, res: Response): Promise<void> {
     try {
       const payload = typeof req.body === 'object' && req.body ? req.body : {}
@@ -64,7 +67,7 @@ export class MyLeagueController {
         leaguePayload.ownerUserId ??= user.id
       }
 
-      const created = await myLeagueService.create(leaguePayload)
+      const created = await myLeagueService.create({ ownerUserId: authUserId, ...leaguePayload})
 
       if (draft && created.league?.id) {
         const options     = typeof draft === 'object' ? draft : {}
@@ -84,6 +87,17 @@ export class MyLeagueController {
       res.status(CODE.OK).send(Resp.Ok(result))
     } catch (error) {
       Service.catchError(error, TAG, 'draft', res)
+    }
+  }
+
+  static async update(req: Request, res: Response) {
+    try {
+      const { myLeagueId }  = req.params
+      const data            = typeof req.body === 'object' && req.body ? req.body : {}
+      const updatedMyLeague = await myLeagueService.updateMyLeagueById(myLeagueId, data)
+      res.status(CODE.OK).send(Resp.Ok(updatedMyLeague))
+    } catch (error) {
+      Service.catchError(error, TAG, 'update', res)
     }
   }
 
