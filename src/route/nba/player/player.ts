@@ -9,7 +9,7 @@ router.route(PATH_PARAM.ROOT)
   .get(PlayerController.list)
   .post(PlayerController.create)
 
-router.post(combinePathParam('create-basic'), protect, PlayerController.createBasic)
+router.post(combinePathParam('create-lite'), protect, PlayerController.createLite)
 
 router.route(combinePathParam(':playerId'))
   .get(PlayerController.get)
