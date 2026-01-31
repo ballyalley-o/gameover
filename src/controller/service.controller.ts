@@ -66,15 +66,15 @@ export class Service {
   }
 
   public static catchError(error: any, tag: string, target: string, res: Response) {
-      const apiErrorMessage = error?.response?.data?.message || error?.data?.message || error?.message || RESPONSE.ERROR[400]
-      const statusCode      = error?.response?.status || error?.response?.data?.statusCode || error?.code || CODE.BAD_REQUEST
+    const apiErrorMessage = error?.response?.data?.message || error?.data?.message || error?.message || RESPONSE.ERROR[400]
+    const statusCode      = error?.response?.status || error?.response?.data?.statusCode || error?.code || CODE.BAD_REQUEST
 
-      goodlog.error(apiErrorMessage || error?.stack, tag, target)
+    goodlog.error(apiErrorMessage || error?.stack, tag, target)
 
-      if (error?.response?.data) {
-        goodlog.error(JSON.stringify(error.response.data), tag, target)
-      }
-      res.status(statusCode).send(Resp.Error(apiErrorMessage, statusCode, error?.response?.data))
+    if (error?.response?.data) {
+      goodlog.error(JSON.stringify(error.response.data), tag, target)
+    }
+    res.status(statusCode).send(Resp.Error(apiErrorMessage, statusCode, error?.response?.data))
   }
 
   public static async createUser(data: any) {
@@ -95,7 +95,7 @@ export class Service {
         - At least one number (0–9)
         - At least one special character (e.g., !, @, #, $)
      */
-    const dataPassword   = String(data.password)
+    const dataPassword = String(data.password)
     const PASSWORD_REGEX = new RegExp(REGEX.PASSWORD)
 
     if (!PASSWORD_REGEX.test(dataPassword)) {
