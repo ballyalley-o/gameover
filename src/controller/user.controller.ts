@@ -7,11 +7,11 @@ import { users } from '../db/schema'
 
 const TAG = 'User.Controller'
 export class UserController {
-    public static async getUsers(_req: Request, res: Response, _next:NextFunction) {
+    public static async getUserAll(_req: Request, res: Response, _next:NextFunction) {
         try {
             res.status(CODE.OK).json(res.advanceResult)
         } catch (error: any) {
-            Service.catchError(error, TAG, 'getUsers', res)
+            Service.catchError(error, TAG, 'getUserAll', res)
         }
     }
 
@@ -46,7 +46,6 @@ export class UserController {
         try {
             const userId      = req.params.id
 
-            console.log('userId', userId)
             const deletedUser = await Service.deleteUser(userId)
             res.status(CODE.OK).send(Resp.Ok(deletedUser, 0, RESPONSE.SUCCESS.DELETED))
         } catch (error: any) {
