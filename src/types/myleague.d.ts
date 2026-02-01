@@ -31,3 +31,8 @@ declare type DraftPlayerType = {
   positions: PlayerPositionType[]
   isStar   : boolean
 }
+
+declare type MyLeagueMembershipRole       = 'owner' | 'member'
+declare type MyLeagueMembershipStatus     = 'pending' | 'accepted' | 'declined' | 'expired'
+declare type MyLeagueMembershipSource     = 'invite' | 'request' | 'system'
+declare type MyLeagueMembershipActionType = 'accept' | 'decline'
