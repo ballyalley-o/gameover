@@ -21,7 +21,8 @@ export const es = {
     "no_id": "No se ha proporcionado ninguna identificación o ésta no es válida",
     "no_or_invalid_api_version": "Versión de API nula o no válida",
     "missing_or_invalid_api_version": "Versión de API faltante o no válida",
-    "failed_link_route": "[mainRoute]: No se pudo vincular la ruta: {linker}"
+    "failed_link_route": "[mainRoute]: No se pudo vincular la ruta: {linker}",
+    "league_full": "la liga esta llena"
   },
   "validation": {
     "default": {
