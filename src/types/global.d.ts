@@ -51,5 +51,4 @@ declare global {
     declare type AppRequestAuthType = Express.Request & {
       userId?: string
     }
-
 }
