@@ -134,6 +134,13 @@
       "when": 1769700132134,
       "tag": "0018_make-myleague-name-unique",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1769960465466,
+      "tag": "0019_myleague-memberships-username",
+      "breakpoints": true
     }
   ]
 }
