@@ -22,7 +22,8 @@ export const fr = {
     "no_or_invalid_api_version": "Version API non valide ou non valide",
     "missing_or_invalid_api_version": "Version de l'API manquante ou invalide",
     "failed_link_route": "[mainRoute] : échec de la liaison de l'itinéraire : {linker}",
-    "league_full": "La ligue est pleine"
+    "league_full": "La ligue est pleine",
+    "membership_already_processed": "Adhésion déjà traitée"
   },
   "validation": {
     "default": {
@@ -34,5 +35,8 @@ export const fr = {
     },
     "password": "Le mot de passe doit comporter plus de 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole.",
     "max_league_allowed_user": "Limite maximale ({max}) autorisée pour les ligues détenues atteinte"
+  },
+  "message": {
+    "owner_no_myleague": "Aucune MyLeague créée"
   }
 } as const

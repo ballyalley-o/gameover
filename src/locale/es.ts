@@ -22,7 +22,8 @@ export const es = {
     "no_or_invalid_api_version": "Versión de API nula o no válida",
     "missing_or_invalid_api_version": "Versión de API faltante o no válida",
     "failed_link_route": "[mainRoute]: No se pudo vincular la ruta: {linker}",
-    "league_full": "la liga esta llena"
+    "league_full": "la liga esta llena",
+    "membership_already_processed": "Membresía ya procesada"
   },
   "validation": {
     "default": {
@@ -34,5 +35,8 @@ export const es = {
     },
     "password": "La contraseña debe tener más de 8 caracteres con al menos una mayúscula, una minúscula, un número y un símbolo.",
     "max_league_allowed_user": "Se alcanzó el límite máximo ({max}) permitido para las ligas de propiedad."
+  },
+  "message": {
+    "owner_no_myleague": "No se ha creado ninguna MyLeague"
   }
 } as const

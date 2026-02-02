@@ -24,6 +24,9 @@ export const en = {
     user_not_authorized           : 'User not authorized',
     user_not_found                : 'User not found'
   },
+  message: {
+    owner_no_myleague: 'No MyLeague created'
+  },
   validation: {
     default: {
       invalid   : 'Invalid {field}',
