@@ -37,6 +37,21 @@ export class MyLeagueController {
     }
   }
 
+  static async getMyLeagueAll(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user.id) {
+        return Service.invalid(RESPONSE.ERROR[401], CODE.UNAUTHORIZED)
+      }
+      const { user }    = req
+      const myLeagueAll = await myLeagueService.getMyLeagueAll(user.id)
+      if (myLeagueAll?.length < 0) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+      if (myLeagueAll?.length == 0) throw new Error(transl('message.owner_no_myleague'))
+
+      res.status(CODE.OK).send(Resp.Ok(myLeagueAll))
+    } catch (error) {
+      Service.catchError(error, TAG, 'getMyLeagueAll', res)
+    }
+  }
   // invite users to join
   // send request to join league
   static async create(req: Request, res: Response): Promise<void> {
