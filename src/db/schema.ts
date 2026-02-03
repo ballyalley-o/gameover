@@ -15,22 +15,26 @@ export const archetypeEnum = pgEnum('archetype', [
   'utility',
   'unknown'
 ])
-export const gameStatusEnum = pgEnum('game_status', ['scheduled', 'completed', 'simulated'])
-export const statusEnum     = pgEnum('status', ['Active', 'Inactive'])
-
-export const conferenceEnum = pgEnum('conference', ['Eastern', 'Western'])
-export const divisionEnum   = pgEnum('division', ['Southeast', 'Central', 'Atlantic', 'Southwest', 'Northwest', 'Pacific'])
+export const gameStatusEnum       = pgEnum('game_status', ['scheduled', 'completed', 'simulated'])
+export const statusEnum           = pgEnum('status', ['Active', 'Inactive'])
+export const myLeagueRoleEnum     = pgEnum('my_league_role', ['owner', 'member'])
+export const myLeagueStatusEnum   = pgEnum('my_league_status', ['pending', 'active', 'locked', 'finished'])
+export const membershipStatusEnum = pgEnum('membership_status', ['pending', 'accepted', 'declined', 'expired'])
+export const sourceEnum           = pgEnum('membership_source', ['invite', 'request', 'system'])
+export const conferenceEnum       = pgEnum('conference', ['Eastern', 'Western'])
+export const divisionEnum         = pgEnum('division', ['Southeast', 'Central', 'Atlantic', 'Southwest', 'Northwest', 'Pacific'])
 
 export const users = pgTable('users', {
   id           : uuid('id').defaultRandom().primaryKey(),
   firstname    : varchar('firstname', { length: 255 }).notNull(),
   lastname     : varchar('lastname', { length: 255 }),
   email        : varchar('email', { length: 255 }).notNull().unique(),
+  username     : varchar('username', { length: 255 }).unique(),
   emailVerified: timestamp('emailVerified', { withTimezone: false, mode: 'date' }),
   password     : varchar('password', { length: 255 }),
   role         : varchar('role', { length: 32 }).$type<Role>().notNull().default('user'),
   createdAt    : timestamp('createdAt', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
-  updatedAt    : timestamp('updatedAt', { withTimezone: false, mode: 'date' }).defaultNow().$onUpdate(() => new Date()),
+  updatedAt    : timestamp('updatedAt', { withTimezone: false, mode: 'date' }).defaultNow().$onUpdate(() => new Date())
 })
 
 export const players = pgTable('players', {
@@ -55,10 +59,7 @@ export const players = pgTable('players', {
   salary      : integer('salary'),
   injuryRisk  : varchar('injury_risk', { length: 16 }),
   createdAt   : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
-  updatedAt   : timestamp('updated_at', { withTimezone: false, mode: 'date' })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
+  updatedAt   : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date())
 })
 
 export const teams = pgTable('teams', {
@@ -88,7 +89,7 @@ export const teams = pgTable('teams', {
   createdAt      : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
   updatedAt      : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
-  ownerIdx: index('idx_teams_owner').on(table.ownerUserId),
+  ownerIdx: index('idx_teams_owner').on(table.ownerUserId)
 }))
 
 export const rosters = pgTable('rosters', {
@@ -114,7 +115,9 @@ export const myLeagues = pgTable('my_leagues', {
   name       : varchar('name', { length: 255 }).notNull().unique(),
   ownerUserId: uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
   isPrivate  : boolean('is_private').notNull().default(true),
+  status     : myLeagueStatusEnum('status').notNull().default('pending'),
   createdAt  : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  maxUser    : smallint('max_user'),
   updatedAt  : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
   ownerIdx: index('idx_my_leagues_owner').on(table.ownerUserId),
@@ -137,12 +140,14 @@ export const myLeagueTeams = pgTable('my_league_teams', {
   quaternaryColor: varchar('quaternary_color', { length: 8 }),
   logoUrl        : varchar('logo_url', { length: 255 }),
   wordmarkUrl    : varchar('wordmark_url', { length: 255 }),
+  isCpu          : boolean('is_cpu').notNull().default(false),
   createdAt      : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
   updatedAt      : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
-  leagueIdx : index('idx_my_league_teams_league').on(table.leagueId),
-  ownerIdx  : index('idx_my_league_teams_owner').on(table.ownerUserId),
-  leagueKey : uniqueIndex('uq_my_league_teams_league_key').on(table.leagueId, table.key),
+  leagueIdx       : index('idx_my_league_teams_league').on(table.leagueId),
+  ownerIdx        : index('idx_my_league_teams_owner').on(table.ownerUserId),
+  leagueKey       : uniqueIndex('uq_my_league_teams_league_key').on(table.leagueId, table.key),
+  leagueBaseTeamUq: uniqueIndex('uq_my_league_teams_league_base_team').on(table.leagueId, table.baseTeamId),
 }))
 
 export const myLeaguePlayers = pgTable('my_league_players', {
@@ -185,11 +190,27 @@ export const myLeagueRosters = pgTable('my_league_rosters', {
   createdAt     : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
   updatedAt     : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
-  leagueIdx    : index('idx_my_league_rosters_league').on(table.leagueId),
-  teamIdx      : index('idx_my_league_rosters_team').on(table.leagueTeamId),
-  playerIdx    : index('idx_my_league_rosters_player').on(table.leaguePlayerId),
+  leagueIdx     : index('idx_my_league_rosters_league').on(table.leagueId),
+  teamIdx       : index('idx_my_league_rosters_team').on(table.leagueTeamId),
+  playerIdx     : index('idx_my_league_rosters_player').on(table.leaguePlayerId),
   leaguePlayerUq: uniqueIndex('uq_my_league_rosters_league_player').on(table.leagueId, table.leaguePlayerId),
-  leagueTeamUq : uniqueIndex('uq_my_league_rosters_team_player').on(table.leagueTeamId, table.leaguePlayerId),
+  leagueTeamUq  : uniqueIndex('uq_my_league_rosters_team_player').on(table.leagueTeamId, table.leaguePlayerId),
+}))
+
+export const myLeagueMembership = pgTable('my_league_memberships', {
+  id       : uuid('id').defaultRandom().primaryKey(),
+  leagueId : uuid('league_id').notNull().references(() => myLeagues.id, { onDelete: 'cascade' }),
+  userId   : uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role     : myLeagueRoleEnum('role').notNull().default('member'),
+  status   : membershipStatusEnum('status').notNull().default('pending'),
+  source   : sourceEnum('source').notNull().default('system'),
+  createdAt: timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({
+  leagueIdx: index('idx_my_league_membership_league').on(table.leagueId),
+  userIdx  : index('idx_my_league_membership_user').on(table.userId),
+  statusIdx: index('idx_my_league_membership_status').on(table.status),
+  leagueUserUq: uniqueIndex('uq_my_league_membership_league_user').on(table.leagueId, table.userId),
 }))
 
 export const lineups = pgTable('lineups', {
