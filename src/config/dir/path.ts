@@ -12,6 +12,7 @@ export const MODULE = {
 
 export const PATH_PARAM = {
   ROOT       : '/',
+  ALL        : 'all',
   API        : 'api',
   ID         : ':id',
   PLAYER_ID  : ':playerId',
@@ -43,6 +44,7 @@ export const PATH_PARAM = {
   MY_LEAGUE    : 'myleague',
   MEMBERSHIP   : 'membership',
   METRIC       : 'metric',
+  OWNER        : 'owner',
   PLAYER       : 'player',
   PREVIEW      : 'preview',
   REQUEST      : 'request',
