@@ -17,6 +17,7 @@ router
     .put(protect, authorize('admin'), MyLeagueController.update)
     .delete(protect, authorize('admin'), MyLeagueController.deleteMyLeagueById)
 
+router.get(combinePathParam(PATH_PARAM.OWNER, PATH_PARAM.ALL), protect, MyLeagueController.getMyLeagueAll)
 router.post(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.DRAFT), MyLeagueController.draft)
 router.post(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.INVITE), protect, MyLeagueMembershipController.invite)
 router.post(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.REQUEST), protect, MyLeagueMembershipController.requestJoin)
