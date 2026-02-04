@@ -9,6 +9,7 @@ export const en = {
   error: {
     failed_find                   : 'Failed to find the requested document',
     failed_link_route             : '[mainRoute]: Failed to link Route: {linker}',
+    failed_update                 : 'Failed to update this document',
     invalid_email_format          : 'Invalid email format (Unicode check failed)',
     invalid_team_abbr             : 'Invalid team provided; expected NBA 3-letter format (e.g. CLE, MIA)',
     invalie_date_format           : 'Invalid date provided; expected date YYYY-MM-DD or YYYY-MMM-DD format (e.g. 2025-01-25, 2025-JAN-12)',

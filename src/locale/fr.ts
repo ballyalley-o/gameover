@@ -23,7 +23,8 @@ export const fr = {
     "missing_or_invalid_api_version": "Version de l'API manquante ou invalide",
     "failed_link_route": "[mainRoute] : échec de la liaison de l'itinéraire : {linker}",
     "league_full": "La ligue est pleine",
-    "membership_already_processed": "Adhésion déjà traitée"
+    "membership_already_processed": "Adhésion déjà traitée",
+    "failed_update": "Échec de la mise à jour de ce document"
   },
   "validation": {
     "default": {

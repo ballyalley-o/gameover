@@ -23,7 +23,8 @@ export const es = {
     "missing_or_invalid_api_version": "Versión de API faltante o no válida",
     "failed_link_route": "[mainRoute]: No se pudo vincular la ruta: {linker}",
     "league_full": "la liga esta llena",
-    "membership_already_processed": "Membresía ya procesada"
+    "membership_already_processed": "Membresía ya procesada",
+    "failed_update": "No se pudo actualizar este documento"
   },
   "validation": {
     "default": {
