@@ -52,8 +52,7 @@ export class MyLeagueController {
       Service.catchError(error, TAG, 'getMyLeagueAll', res)
     }
   }
-  // invite users to join
-  // send request to join league
+
   static async create(req: Request, res: Response): Promise<void> {
     try {
       const payload = typeof req.body === 'object' && req.body ? req.body : {}
@@ -95,6 +94,20 @@ export class MyLeagueController {
     }
   }
 
+  static async updateMyLeague(req: Request, res: Response): Promise<void> {
+    try {
+      const { myLeagueId } = req.params
+      const data           = req.body
+
+      if (!myLeagueId) Service.invalid(transl('error.no_id'), CODE.BAD_REQUEST)
+
+      const updatedMyLeague = await myLeagueService.updateMyLeague(myLeagueId, data)
+
+      res.status(CODE.OK).send(Resp.Ok(updatedMyLeague))
+    } catch (error) {
+      Service.catchError(error, TAG, 'update', res)
+    }
+  }
   static async draft(req: Request, res: Response) {
     try {
       const options = typeof req.body === 'object' && req.body ? req.body : {}
