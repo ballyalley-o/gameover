@@ -14,13 +14,15 @@ router
 router
     .route(combinePathParam(PATH_PARAM.MY_LEAGUE_ID))
     .get(protect, authorize('admin'), MyLeagueController.get)
-    .put(protect, authorize('admin'), MyLeagueController.update)
+    .put(protect, MyLeagueController.updateMyLeague)
     .delete(protect, authorize('admin'), MyLeagueController.deleteMyLeagueById)
 
 router.get(combinePathParam(PATH_PARAM.OWNER, PATH_PARAM.ALL), protect, MyLeagueController.getMyLeagueAll)
 router.post(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.DRAFT), MyLeagueController.draft)
 router.post(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.INVITE), protect, MyLeagueMembershipController.invite)
 router.post(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.REQUEST), protect, MyLeagueMembershipController.requestJoin)
+
+router.get(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.MEMBER, PATH_PARAM.ALL), protect, MyLeagueMembershipController.getMemberAll)
 router.get(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.MEMBERSHIP), protect, MyLeagueMembershipController.list)
 router.post(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.MEMBERSHIP, PATH_PARAM.MEMBERSHIP_ID, PATH_PARAM.ACCEPT), protect, MyLeagueMembershipController.accept)
 router.post(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.MEMBERSHIP, PATH_PARAM.MEMBERSHIP_ID, PATH_PARAM.DECLINE), protect, MyLeagueMembershipController.decline)
