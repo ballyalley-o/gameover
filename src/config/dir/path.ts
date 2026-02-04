@@ -42,6 +42,7 @@ export const PATH_PARAM = {
   JSON         : 'json',
   LINEUP       : 'lineup',
   MY_LEAGUE    : 'myleague',
+  MEMBER       : 'member',
   MEMBERSHIP   : 'membership',
   METRIC       : 'metric',
   OWNER        : 'owner',
