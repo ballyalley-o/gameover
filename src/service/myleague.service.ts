@@ -1,16 +1,16 @@
 import { db, GLOBAL } from 'gameover'
 import { and, eq, ilike, or, sql } from 'drizzle-orm'
-import { myLeagues, myLeaguePlayers, myLeagueRosters, myLeagueTeams, players, teams } from 'db/schema'
+import { myLeagues, myLeagueMembership, myLeaguePlayers, myLeagueRosters, myLeagueTeams, players, teams } from 'db/schema'
 import { ErrorResponse } from 'middleware'
-import type { DrizzleMyLeague, DrizzleUser } from 'types/schema'
+import type { DrizzleMyLeague, DrizzleUser, NewDrizzleMyLeague } from 'types/schema'
 import { CODE, RESPONSE } from 'constant'
-import { toNumber } from 'utility'
+import { toNumber, transl } from 'utility'
 
 const POSITION_ORDER: PlayerPositionType[]       = ['PG', 'SG', 'SF', 'PF', 'C']
 const DEFAULT_TARGETS: Record<PlayerPositionType, number> = { PG: 2, SG: 2, SF: 2, PF: 2, C: 2 }
 const MAX_TEAMS_PER_LEAGUE                       = GLOBAL.MY_LEAGUE.MAX_TEAM_PER_LEAGUE
 
-const shuffle = <T,>(items: T[]): T[] => {
+const _shuffle = <T,>(items: T[]): T[] => {
   const arr = [...items]
   for (let i = arr.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1))
@@ -19,7 +19,7 @@ const shuffle = <T,>(items: T[]): T[] => {
   return arr
 }
 
-const buildTeamKey = (raw: string, used: Set<string>): string => {
+const _buildTeamKey = (raw: string, used: Set<string>): string => {
   const normalized = raw.replace(/[^A-Za-z]/g, '').toUpperCase()
   const base       = (normalized || 'MLG').slice(0, 3).padEnd(3, 'X')
   let   key        = base
@@ -30,7 +30,7 @@ const buildTeamKey = (raw: string, used: Set<string>): string => {
   return key
 }
 
-const resolveTargets = (options: DraftOptionType) => {
+const _resolveTargets = (options: DraftOptionType) => {
   const overrides = options.positionTargets ?? {}
   return POSITION_ORDER.reduce((acc, pos) => {
     acc[pos] = Math.max(0, Math.floor(overrides[pos] ?? DEFAULT_TARGETS[pos]))
@@ -38,7 +38,7 @@ const resolveTargets = (options: DraftOptionType) => {
   }, {} as Record<PlayerPositionType, number>)
 }
 
-const pickPlayer = (
+const _pickPlayer = (
   available   : DraftPlayerType[],
   teamStars   : Map<string, number>,
   teamId      : string,
@@ -113,6 +113,14 @@ export const myLeagueService = {
     }
   },
 
+  async getMyLeagueAll(ownerId: string): Promise<DrizzleMyLeague[]> {
+    try {
+      return await db.select().from(myLeagues).where(eq(myLeagues.ownerUserId, ownerId))
+    } catch (error) {
+      throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
+    }
+  },
+
   async create(payload: CreateMyLeaguePayloadType) {
     const { name, isPrivate, includeBaseTeams = true, teamCount, ownerTeam, ownerUserId } = payload
     if (!name) {
@@ -124,6 +132,19 @@ export const myLeagueService = {
     }
 
     const [league] = await db.insert(myLeagues).values({ name, ownerUserId, isPrivate }).returning()
+
+    if (ownerUserId) {
+      await db
+        .insert(myLeagueMembership)
+        .values({
+          leagueId: league.id,
+          userId  : ownerUserId,
+          role    : 'owner',
+          status  : 'accepted',
+          source  : 'system',
+        })
+        .onConflictDoNothing({ target: [myLeagueMembership.leagueId, myLeagueMembership.userId] })
+    }
 
     const teamSelect = {
       id             : teams.id,
@@ -171,7 +192,7 @@ export const myLeagueService = {
     }
 
     const targetBaseCount   = includeBaseTeams ? Math.min(basePool.length, Math.max(0, desiredTotal - ownerTeamCount)) : 0
-    const selectedBaseTeams = includeBaseTeams ? shuffle(basePool).slice(0, targetBaseCount) : []
+    const selectedBaseTeams = includeBaseTeams ? _shuffle(basePool).slice(0, targetBaseCount) : []
 
     const usedKeys = new Set(selectedBaseTeams.map((team) => team.key))
     const teamRows: Array<typeof myLeagueTeams.$inferInsert> = selectedBaseTeams.map((team) => ({
@@ -192,15 +213,15 @@ export const myLeagueService = {
     }))
 
     if (ownerTeamRecord) {
-      const key = usedKeys.has(ownerTeamRecord.key) ? buildTeamKey(ownerTeamRecord.key, usedKeys) : ownerTeamRecord.key
+      const key = usedKeys.has(ownerTeamRecord.key) ? _buildTeamKey(ownerTeamRecord.key, usedKeys) : ownerTeamRecord.key
       usedKeys.add(key)
       teamRows.push({
-        leagueId   : league.id,
-        baseTeamId : ownerTeamRecord.id,
-        ownerUserId: ownerUserId ?? null,
-        city       : ownerTeamRecord.city,
-        name       : ownerTeamRecord.name,
-        key,
+        leagueId       : league.id,
+        baseTeamId     : ownerTeamRecord.id,
+        ownerUserId    : ownerUserId ?? null,
+        city           : ownerTeamRecord.city,
+        name           : ownerTeamRecord.name,
+        key            ,
         conference     : ownerTeamRecord.conference,
         division       : ownerTeamRecord.division,
         primaryColor   : ownerTeamRecord.primaryColor ?? null,
@@ -284,6 +305,22 @@ export const myLeagueService = {
     }
   },
 
+  async updateMyLeague(myLeagueId: string, data: Partial<NewDrizzleMyLeague>): Promise<DrizzleMyLeague> {
+    if (!myLeagueId || !data) {
+      throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
+    }
+
+    const existingMyLeague = await db.select({ id: myLeagues.id }).from(myLeagues).where(eq(myLeagues.id, myLeagueId))
+    if (!existingMyLeague) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+
+    const [updatedMyLeague] = await db.update(myLeagues).set({ ...data }).where(eq(myLeagues.id, myLeagueId)).returning()
+    if (!updatedMyLeague) {
+      throw new ErrorResponse(transl('error.failed_update'), CODE.BAD_REQUEST)
+    }
+
+    return updatedMyLeague
+  },
+
   async draft(leagueId: string, options: DraftOptionType = {}) {
     if (!leagueId) {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
@@ -294,8 +331,6 @@ export const myLeagueService = {
     if (!leagueTeams.length) {
       throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
     }
-
-    // validate the invite/request key
 
     if (leagueTeams.length > MAX_TEAMS_PER_LEAGUE) {
       throw new ErrorResponse(`Max ${MAX_TEAMS_PER_LEAGUE} teams per league`, CODE.UNPROCESSABLE_ENTITY)
@@ -315,7 +350,7 @@ export const myLeagueService = {
     }
 
     const teamCount = leagueTeams.length
-    const targets   = resolveTargets(options)
+    const targets   = _resolveTargets(options)
     const required  = POSITION_ORDER.reduce((sum, pos) => sum + targets[pos], 0)
 
     let rosterSize = Math.max(1, Math.floor(options.rosterSize ?? 12))
@@ -346,13 +381,14 @@ export const myLeagueService = {
       Math.max(0, starPoolCount - maxStarsPerTeam * teamCount)
     )
     const bonusTeamIds = new Set(
-      shuffle(leagueTeams)
+      _shuffle(leagueTeams)
         .slice(0, bonusTeams)
         .map((team) => team.id)
     )
 
     const teamStars      = new Map<string, number>()
     const teamStarLimits = new Map<string, number>()
+
     for (const team of leagueTeams) {
       teamStars.set(team.id, 0)
       teamStarLimits.set(team.id, maxStarsPerTeam + (bonusTeamIds.has(team.id) ? 1 : 0))
@@ -375,24 +411,25 @@ export const myLeagueService = {
         leagueTeamId  : teamId,
         leaguePlayerId: playerId,
         draftRound    : Math.ceil(pickNumber / teamCount),
-        draftPick     : pickNumber,
+        draftPick     : pickNumber
       })
+
       pickNumber += 1
     }
 
     const pickWithFallback = (teamId: string, position?: PlayerPositionType) => {
       return (
-        pickPlayer(available, teamStars, teamId, teamStarLimits, position, variance, true) ??
-        pickPlayer(available, teamStars, teamId, teamStarLimits, position, variance, false) ??
-        pickPlayer(available, teamStars, teamId, teamStarLimits, undefined, variance, true) ??
-        pickPlayer(available, teamStars, teamId, teamStarLimits, undefined, variance, false)
+        _pickPlayer(available, teamStars, teamId, teamStarLimits, position, variance, true) ??
+        _pickPlayer(available, teamStars, teamId, teamStarLimits, position, variance, false) ??
+        _pickPlayer(available, teamStars, teamId, teamStarLimits, undefined, variance, true) ??
+        _pickPlayer(available, teamStars, teamId, teamStarLimits, undefined, variance, false)
       )
     }
 
     // Fill required position slots first, then add flex slots.
     for (const position of POSITION_ORDER) {
       for (let round = 0; round < targets[position]; round += 1) {
-        for (const team of shuffle(leagueTeams)) {
+        for (const team of _shuffle(leagueTeams)) {
           const player = pickWithFallback(team.id, position)
           if (player) addPick(team.id, player.id)
         }
@@ -400,7 +437,7 @@ export const myLeagueService = {
     }
 
     for (let round = 0; round < flexSlots; round += 1) {
-      for (const team of shuffle(leagueTeams)) {
+      for (const team of _shuffle(leagueTeams)) {
         const player = pickWithFallback(team.id)
         if (player) addPick(team.id, player.id)
       }
