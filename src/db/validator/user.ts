@@ -10,6 +10,7 @@ export const userSelectSchema = createSelectSchema(users)
 export const userInsertSchema = createInsertSchema(users, {
   firstname    : (schema) => schema.min(1).max(255),
   lastname     : (schema) => schema.max(255).optional(),
+  username     : (schema) => schema.max(255).optional(),
   role         : roleEnum.default('user'),
   email        : () => emailSchema,
   password     : (schema) => schema.min(8).max(255),
