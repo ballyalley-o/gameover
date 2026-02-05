@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { FeedController } from 'controller/feed.controller'
+import { FeedController } from 'controller/feed'
 import { protect } from 'middleware'
 
 const router = Router({ mergeParams: true })
