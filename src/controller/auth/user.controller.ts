@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
-import { eq } from 'drizzle-orm'
 import { db } from 'gameover'
+import { eq } from 'drizzle-orm'
+import { users } from 'db/schema'
 import { Service } from 'controller'
 import { CODE, Resp, RESPONSE } from 'constant'
-import { users } from '../db/schema'
 
 const TAG = 'User.Controller'
 export class UserController {
