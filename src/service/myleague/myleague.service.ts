@@ -179,7 +179,7 @@ export const myLeagueService = {
     const maxBaseTeams   = Math.max(0, MAX_TEAMS_PER_LEAGUE - ownerTeamCount)
 
     if (teamCount && teamCount > MAX_TEAMS_PER_LEAGUE) {
-      throw new ErrorResponse(`Max ${MAX_TEAMS_PER_LEAGUE} teams per league`, CODE.UNPROCESSABLE_ENTITY)
+      throw new ErrorResponse(transl('error.max_count_per_myleague', { count: MAX_TEAMS_PER_LEAGUE }), CODE.UNPROCESSABLE_ENTITY)
     }
 
     const basePool = ownerTeamRecord ? baseTeams.filter((team) => team.id !== ownerTeamRecord.id) : baseTeams
