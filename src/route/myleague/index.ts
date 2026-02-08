@@ -3,8 +3,10 @@ import { MODULE, PATH_PARAM } from 'config/dir'
 import { combine } from 'utility'
 
 import myLeagueRoute from './myleague'
+import membershipRoute  from './membership'
 
 export const linkMyLeagueRoute = (app: Application, apiVer: string) => {
     const base = combine(apiVer, MODULE.MY_LEAGUE)
     app.use(combine(base, PATH_PARAM.ROOT), myLeagueRoute)
+    app.use(combine(base, PATH_PARAM.MY_LEAGUE_ID), membershipRoute)
 }
