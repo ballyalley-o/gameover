@@ -24,7 +24,12 @@ export const es = {
     "failed_link_route": "[mainRoute]: No se pudo vincular la ruta: {linker}",
     "league_full": "la liga esta llena",
     "membership_already_processed": "Membresía ya procesada",
-    "failed_update": "No se pudo actualizar este documento"
+    "failed_update": "No se pudo actualizar este documento",
+    "user_has_team": "La usuario ya tiene un equipo",
+    "team_already_selected": "Equipo ya seleccionado",
+    "cpu_cannot_be_selected": "No se puede seleccionar el equipo de CPU",
+    "team_has_already_selected": "{field} ya ha sido seleccionado",
+    "max_count_per_myleague": "Máximo de {count} equipos por myleague"
   },
   "validation": {
     "default": {

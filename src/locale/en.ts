@@ -7,6 +7,7 @@ export const en = {
     user_signed_in: 'User signed in',
   },
   error: {
+    cpu_cannot_be_selected        : 'CPU team cannot be selected',
     failed_find                   : 'Failed to find the requested document',
     failed_link_route             : '[mainRoute]: Failed to link Route: {linker}',
     failed_update                 : 'Failed to update this document',
@@ -18,12 +19,16 @@ export const en = {
     invalid_data_response         : 'Invalid data response',
     league_full                   : 'League is full',
     membership_already_processed  : 'Membership already processed',
+    max_count_per_myleague        : 'Max {count} teams per myleague',
     missing_or_invalid_api_version: 'Missing or Invalid api version',
     no_id                         : 'No id or invalid id provided',
     not_found                     : `NOT FOUND: {field} not found`,
     user_not_authenticated        : 'User not authenticated',
     user_not_authorized           : 'User not authorized',
-    user_not_found                : 'User not found'
+    user_not_found                : 'User not found',
+    user_has_team                 : 'User already has a team',
+    team_has_already_selected     : '{field} has already been selected',
+    team_already_selected         : 'Team already selected'
   },
   message: {
     owner_no_myleague: 'No MyLeague created'

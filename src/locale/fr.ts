@@ -24,7 +24,12 @@ export const fr = {
     "failed_link_route": "[mainRoute] : échec de la liaison de l'itinéraire : {linker}",
     "league_full": "La ligue est pleine",
     "membership_already_processed": "Adhésion déjà traitée",
-    "failed_update": "Échec de la mise à jour de ce document"
+    "failed_update": "Échec de la mise à jour de ce document",
+    "user_has_team": "L'utilisateur a déjà une équipe",
+    "team_already_selected": "Equipe déjà sélectionnée",
+    "cpu_cannot_be_selected": "L'équipe CPU ne peut pas être sélectionnée",
+    "team_has_already_selected": "{field} a déjà été sélectionné",
+    "max_count_per_myleague": "Max {count} équipes par ma ligue"
   },
   "validation": {
     "default": {
