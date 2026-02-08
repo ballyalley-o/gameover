@@ -15,6 +15,6 @@ router.route(combinePathParam(':id', 'metric'))
   .post(LineupController.computeMetric)
 
 /**
- * @path {apiURL}/nba/lineup
+ * @path {apiURL}/nba/team/lineup
  */
 export default router
