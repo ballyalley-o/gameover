@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { combinePathParam, PATH_PARAM } from 'config/dir'
-import { LineupController } from 'controller'
+import { LineupController } from 'controller/nba'
 
 const router = Router({ mergeParams: true })
 
