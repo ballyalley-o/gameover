@@ -104,4 +104,37 @@ export class MyLeagueMembershipController {
       Service.catchError(error, TAG, 'decline', res)
     }
   }
+
+  static async selectTeam(req: Request, res: Response) {
+    try {
+      const actorUserId                 = req.user?.id
+      const { myLeagueId }              = req.params
+      const { myLeagueTeamId, teamKey } = (typeof req.body === 'object' && req.body) ? req.body : {}
+
+      if (!actorUserId || !myLeagueTeamId) {
+        return Service.invalid(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
+      }
+
+      const team = await myLeagueMembershipService.selectTeam(myLeagueId, actorUserId, teamKey, myLeagueTeamId)
+      res.status(CODE.OK).send(Resp.Ok(team))
+    } catch (error) {
+      Service.catchError(error, TAG, 'selectTeam', res)
+    }
+  }
+
+  static async listAvailableTeamAll(req: Request, res: Response): Promise<void> {
+    try {
+      const actorUserId    = req.user?.id
+      const { myLeagueId } = req.params
+
+      if (!actorUserId) {
+        return Service.invalid(RESPONSE.ERROR[403], CODE.UNAUTHORIZED)
+      }
+
+      const teams = await myLeagueMembershipService.listAvailableTeamAll(myLeagueId, actorUserId)
+      res.status(CODE.OK).send(Resp.Ok(teams, teams.length))
+    } catch (error) {
+      Service.catchError(error, TAG, 'listAvailableTeamAll',res)
+    }
+  }
 }
