@@ -6,7 +6,7 @@ import type { DrizzlePlayer, NewDrizzlePlayer } from 'types/schema'
 import { CODE } from 'constant'
 import { transl } from 'utility'
 
-import { feedService } from './feed.service'
+import { feedService } from '../../feed/feed.service'
 import { statsService } from './stats.service'
 
 export const playerService = {
