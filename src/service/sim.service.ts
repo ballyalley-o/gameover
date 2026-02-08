@@ -1,10 +1,9 @@
-import { eq } from 'drizzle-orm'
 import { db } from 'gameover'
 import { CODE, RESPONSE } from 'constant'
 import { ErrorResponse } from 'middleware'
-import { games, lineups } from 'db/schema'
+import { games } from 'db/schema'
 import type { Game, LineupMetric, SimulationInput, SimulationResult } from 'types/game'
-import { lineupService } from './lineup.service'
+import { lineupService } from './nba/team'
 
 const mulberry32 = (seed: number) => {
   let a = seed >>> 0
@@ -18,14 +17,14 @@ const mulberry32 = (seed: number) => {
 }
 
 const projectScore = (metrics: LineupMetric, opponent: LineupMetric, rng: () => number, isHome: boolean) => {
-  const offense = metrics.offense ?? 50
-  const defense = metrics.defense ?? 50
-  const chemistry = metrics.chemistry ?? 0
-  const pace = metrics.pace ?? 50
+  const offense    = metrics.offense ?? 50
+  const defense    = metrics.defense ?? 50
+  const chemistry  = metrics.chemistry ?? 0
+  const pace       = metrics.pace ?? 50
   const oppDefense = opponent.defense ?? 50
 
-  const base = 90 + (offense - oppDefense) * 0.4 + (chemistry - 50) * 0.2 + (pace - 50) * 0.1
-  const noise = rng() * 12
+  const base     = 90 + (offense - oppDefense) * 0.4 + (chemistry - 50) * 0.2 + (pace - 50) * 0.1
+  const noise    = rng() * 12
   const homeEdge = isHome ? 2 : 0
   return Math.max(60, Math.round(base + noise + homeEdge))
 }
