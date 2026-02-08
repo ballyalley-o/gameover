@@ -31,6 +31,7 @@ export const PATH_PARAM = {
   SIGN_UP : 'sign-up',
   // nba
   ARCHETYPE    : 'archetype',
+  AVAILABLE    : 'available',
   BULK         : 'bulk',
   CLASSIFY     : 'classify',
   CONTRACT     : 'contract',
