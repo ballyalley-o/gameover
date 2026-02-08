@@ -1,5 +1,4 @@
 export * from './game'
-export * from './lineup'
 export * from './player'
 export * from './team'
 export * from './trade'
