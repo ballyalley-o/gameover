@@ -129,7 +129,7 @@ export class Service {
     return updatedUser
   }
 
-  public static async deleteUser(userId: string) {
+  public static async removeUser(userId: string) {
     const [deletedUser] = await db.delete(users).where(eq(users.id, userId)).returning()
     if (!deletedUser) {
       throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)

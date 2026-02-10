@@ -2,6 +2,12 @@ declare type MyLeagueFilter = {
   name?: string
 }
 
+declare type MyLeagueTeamFilter = {
+  name?: string
+  key ?: string
+  city?: string
+}
+
 declare type OwnerTeamInputType = {
   teamId ?: string
   teamKey?: string

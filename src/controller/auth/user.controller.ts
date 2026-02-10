@@ -42,14 +42,14 @@ export class UserController {
         }
     }
 
-    public static async deleteUser(req: Request, res: Response, _next: NextFunction) {
+    public static async removeUser(req: Request, res: Response, _next: NextFunction) {
         try {
             const userId      = req.params.id
 
-            const deletedUser = await Service.deleteUser(userId)
-            res.status(CODE.OK).send(Resp.Ok(deletedUser, 0, RESPONSE.SUCCESS.DELETED))
+            const removedUser = await Service.removeUser(userId)
+            res.status(CODE.OK).send(Resp.Ok(removedUser, 0, RESPONSE.SUCCESS.DELETED))
         } catch (error: any) {
-            Service.catchError(error, TAG, 'deleteUser', res)
+            Service.catchError(error, TAG, 'removedUser', res)
         }
     }
 }

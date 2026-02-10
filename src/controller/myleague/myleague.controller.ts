@@ -8,7 +8,7 @@ import { ErrorResponse } from 'middleware'
 import { CODE, Resp, RESPONSE } from 'constant'
 import { normalize, transl } from 'utility'
 
-import { Service } from '../service.controller'
+import { Service } from 'controller'
 
 const MAX_LEAGUE_PER_OWNER = GLOBAL.MY_LEAGUE.MAX_LEAGUE_PER_OWNER
 
@@ -131,8 +131,9 @@ export class MyLeagueController {
 
   static async deleteMyLeagueById(req: Request, res: Response): Promise<void> {
     try {
+      const actorUser      = req.user
       const { myLeagueId } = req.params
-      await myLeagueService.remove(myLeagueId)
+      await myLeagueService.remove(myLeagueId, actorUser)
       res.status(CODE.NO_CONTENT).send(Resp.Ok({}))
     } catch (error) {
       Service.catchError(error, TAG, 'deleteMyLeagueById', res)

@@ -5,7 +5,7 @@ import { CODE, RESPONSE } from 'constant'
 import { myLeagues, myLeagueMembership, myLeagueTeams, users } from 'db/schema'
 import { transl } from 'utility'
 
-const _ensureLeague = async (leagueId: string) => {
+export const ensureLeague = async (myLeagueId: string) => {
   const [league] = await db
     .select({
       id         : myLeagues.id,
@@ -14,7 +14,7 @@ const _ensureLeague = async (leagueId: string) => {
       maxUser    : myLeagues.maxUser,
     })
     .from(myLeagues)
-    .where(eq(myLeagues.id, leagueId))
+    .where(eq(myLeagues.id, myLeagueId))
 
   if (!league) {
     throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
@@ -42,7 +42,7 @@ export const myLeagueMembershipService = {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
-    const league  = await _ensureLeague(myLeagueId)
+    const league  = await ensureLeague(myLeagueId)
     const isOwner = league.ownerUserId === actorUserId
 
     const [actorMembership] = await db
@@ -93,7 +93,7 @@ export const myLeagueMembershipService = {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
-    const league = await _ensureLeague(leagueId)
+    const league = await ensureLeague(leagueId)
     if (league.ownerUserId !== ownerUserId) {
       throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
     }
@@ -136,7 +136,7 @@ export const myLeagueMembershipService = {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
-    const league = await _ensureLeague(leagueId)
+    const league = await ensureLeague(leagueId)
     if (league.isPrivate) {
       throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
     }
@@ -179,7 +179,7 @@ export const myLeagueMembershipService = {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
-    const league = await _ensureLeague(leagueId)
+    const league = await ensureLeague(leagueId)
     if (league.ownerUserId !== actorUserId) {
       throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
     }
@@ -216,7 +216,7 @@ export const myLeagueMembershipService = {
       throw new ErrorResponse('Membership already processed', CODE.CONFLICT)
     }
 
-    const league   = await _ensureLeague(leagueId)
+    const league   = await ensureLeague(leagueId)
     const isOwner  = league.ownerUserId === actorUserId
     const isMember = membership.userId  === actorUserId
 
@@ -238,102 +238,6 @@ export const myLeagueMembershipService = {
       .set({ status: nextStatus, updatedAt: new Date() })
       .where(eq(myLeagueMembership.id, membership.id))
       .returning()
-
-    return updated
-  },
-
-  async listAvailableTeamAll(myLeagueId: string, actorUserId: string) {
-    if (!myLeagueId || !actorUserId) {
-      throw new ErrorResponse(transl('error.no_id'), CODE.BAD_REQUEST)
-    }
-
-    const league  = await _ensureLeague(myLeagueId)
-    const isOwner = league.ownerUserId === actorUserId
-
-    const [actorMembership] = await db
-      .select({ status: myLeagueMembership.status })
-      .from(myLeagueMembership)
-      .where(and(eq(myLeagueMembership.leagueId, myLeagueId), eq(myLeagueMembership.userId, actorUserId)))
-
-    if (!isOwner && actorMembership?.status) {
-      throw new ErrorResponse(RESPONSE.ERROR[403], CODE.UNAUTHORIZED)
-    }
-
-    const availableTeams = await db
-      .select({
-        id        : myLeagueTeams.id,
-        key       : myLeagueTeams.key,
-        name      : myLeagueTeams.name,
-        city      : myLeagueTeams.city,
-        baseTeamId: myLeagueTeams.baseTeamId
-      })
-      .from(myLeagueTeams)
-      .where(and(
-        eq(myLeagueTeams.leagueId, myLeagueId),
-        isNull(myLeagueTeams.ownerUserId),
-        eq(myLeagueTeams.isCpu, false)
-      ))
-
-      return availableTeams
-  },
-
-  async selectTeam(myLeagueId: string, actorUserId: string, teamKey: string, myLeagueTeamId: string) {
-    if (!myLeagueId || !actorUserId || !myLeagueTeamId) {
-      throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
-    }
-
-    const [membership] = await db
-      .select({ status: myLeagueMembership.status })
-      .from(myLeagueMembership)
-      .where(and(eq(myLeagueMembership.leagueId, myLeagueId), eq(myLeagueMembership.userId, actorUserId)))
-
-    if (!membership || membership.status !== 'accepted') {
-      throw new ErrorResponse(RESPONSE.ERROR[401], CODE.UNAUTHORIZED)
-    }
-
-    const [existingTeam] = await db
-      .select({ id: myLeagueTeams.id })
-      .from(myLeagueTeams)
-      .where(and(eq(myLeagueTeams.leagueId, myLeagueId), eq(myLeagueTeams.ownerUserId, actorUserId)))
-
-    if (existingTeam) {
-      throw new ErrorResponse(transl('error.user_has_team'), CODE.CONFLICT)
-    }
-
-    const [team] = await db
-      .select({ id: myLeagueTeams.id, ownerUserId: myLeagueTeams.ownerUserId, isCpu: myLeagueTeams.isCpu, teamKey: myLeagueTeams.key })
-      .from(myLeagueTeams)
-      .where(and(eq(myLeagueTeams.leagueId, myLeagueId), eq(myLeagueTeams.id, myLeagueTeamId)))
-
-    if (!team) {
-      throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
-    }
-
-    if (team.ownerUserId) {
-      throw new ErrorResponse(transl('error.team_already_selected'), CODE.CONFLICT)
-    }
-
-    if (team.isCpu) {
-      throw new ErrorResponse(transl('error.cpu_cannot_be_selected'), CODE.CONFLICT)
-    }
-
-    const [updated] = await db
-      .update(myLeagueTeams)
-      .set({ ownerUserId: actorUserId, updatedAt: new Date() })
-      .where(
-        and(
-          eq(myLeagueTeams.leagueId, myLeagueId),
-          eq(myLeagueTeams.id, myLeagueTeamId),
-          eq(myLeagueTeams.key, teamKey),
-          isNull(myLeagueTeams.ownerUserId),
-          eq(myLeagueTeams.isCpu, false),
-        ),
-      )
-      .returning()
-
-    if (!updated) {
-      throw new ErrorResponse(transl('error.team_already_selected'), CODE.CONFLICT)
-    }
 
     return updated
   }

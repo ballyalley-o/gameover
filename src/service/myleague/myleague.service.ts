@@ -489,8 +489,20 @@ export const myLeagueService = {
     }
   },
 
-  async remove(myLeagueId: string): Promise<void> {
+  async remove(myLeagueId: string, actorUser: Partial<DrizzleUser>): Promise<void> {
     try {
+      if (!myLeagueId || !actorUser?.id) {
+        throw new ErrorResponse(transl('error.no_id'), CODE.BAD_REQUEST)
+      }
+
+      const [myLeague] = await db.select({ id: myLeagues.id, ownerUserId: myLeagues.ownerUserId }).from(myLeagues).where(eq(myLeagues.id, myLeagueId))
+
+      const isAdmin = actorUser?.role === 'admin'
+      const isOwner = actorUser?.id   === myLeague.ownerUserId
+      if (!isAdmin || !isOwner) {
+        throw new ErrorResponse(RESPONSE.ERROR[403], CODE.UNAUTHORIZED)
+      }
+
       await db.delete(myLeagues).where(eq(myLeagues.id, myLeagueId))
     } catch (error) {
       throw new ErrorResponse((error as ErrorResponse)?.message, CODE.INTERNAL_SERVER_ERROR, CODE.INTERNAL_SERVER_ERROR)

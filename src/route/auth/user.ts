@@ -9,13 +9,13 @@ import { authorize, protect } from 'middleware'
 const router = Router({ mergeParams: true })
 
 router.route(PATH_PARAM.ROOT)
-.get(protect, authorize('admin'), advanceResult(users, { select: userSelect, includeTotal: false }), UserController.getUserAll)
-.post(protect, authorize('admin'), UserController.createUser)
+    .get(protect, authorize('admin'), advanceResult(users, { select: userSelect, includeTotal: false }), UserController.getUserAll)
+    .post(protect, authorize('admin'), UserController.createUser)
 
 router.route(combinePathParam(':id'))
-.get(UserController.getUser)
-.put(UserController.updateUser)
-.delete(UserController.deleteUser)
+    .get(UserController.getUser)
+    .put(UserController.updateUser)
+    .delete(UserController.removeUser)
 
 /**
  * @path {apiURL}/auth/user
