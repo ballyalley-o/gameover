@@ -2,13 +2,12 @@ import { db, GLOBAL } from 'gameover'
 import { Request, Response } from 'express'
 import { eq } from 'drizzle-orm'
 import { users } from 'db/schema'
-import { myLeagueService } from 'service'
 import { DrizzleUser } from 'types/schema'
+import { myLeagueService } from 'service'
+import { Service } from 'controller'
 import { ErrorResponse } from 'middleware'
 import { CODE, Resp, RESPONSE } from 'constant'
 import { normalize, transl } from 'utility'
-
-import { Service } from 'controller'
 
 const MAX_LEAGUE_PER_OWNER = GLOBAL.MY_LEAGUE.MAX_LEAGUE_PER_OWNER
 
