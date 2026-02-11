@@ -34,7 +34,7 @@ export const ensureMyLeagueOwnerOrAdmin = async (userId: string): Promise<{ isAd
 
 const TAG = 'MyLeagueTeam.Service'
 export const myLeagueTeamService = {
-    async list(myLeagueId: string, actorUser: Pick<DrizzleUser, 'id' | 'role'>, filters: MyLeagueTeamFilter = {}): Promise<DrizzleMyLeagueTeam[] | undefined> {
+    async list(myLeagueId: string, actorUser: Pick<DrizzleUser, 'id' | 'role'>, filters: MyLeagueTeamFilterType = {}): Promise<DrizzleMyLeagueTeam[] | undefined> {
         try {
             const conditions = [] as any[]
 
