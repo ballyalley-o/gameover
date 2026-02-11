@@ -10,14 +10,15 @@ router
     .get(protect, MyLeagueTeamController.list)
 
 router.get(combinePathParam(PATH_PARAM.AVAILABLE), protect, MyLeagueTeamController.listAvailableTeamAll)
-router.put(combinePathParam(PATH_PARAM.SELECT), protect, MyLeagueTeamController.selectTeam)
 
 router
     .route(combinePathParam(PATH_PARAM.MY_LEAGUE_TEAM_ID))
     .get(protect, MyLeagueTeamController.get)
     .delete(protect, MyLeagueTeamController.removeTeam)
 
+router.put(combinePathParam(PATH_PARAM.MY_LEAGUE_TEAM_ID, PATH_PARAM.SELECT_TEAM), protect, MyLeagueTeamController.selectTeam)
+
 /**
- * @path {apiURL}/myleague/{:myLeagueId}/team
+ * @path {apiURL}/myleague/{:myLeagueId}/team/...
  */
 export default router
