@@ -128,14 +128,14 @@ export class MyLeagueController {
     }
   }
 
-  static async deleteMyLeagueById(req: Request, res: Response): Promise<void> {
+  static async removeMyLeagueById(req: Request, res: Response): Promise<void> {
     try {
       const actorUser      = req.user
       const { myLeagueId } = req.params
       await myLeagueService.remove(myLeagueId, actorUser)
       res.status(CODE.NO_CONTENT).send(Resp.Ok({}))
     } catch (error) {
-      Service.catchError(error, TAG, 'deleteMyLeagueById', res)
+      Service.catchError(error, TAG, 'removeMyLeagueById', res)
     }
   }
 
@@ -144,7 +144,7 @@ export class MyLeagueController {
       await myLeagueService.removeAll()
       res.status(CODE.NO_CONTENT).send(Resp.Ok([]))
     } catch (error) {
-      Service.catchError(error, TAG, 'deleteMyLeagueById', res)
+      Service.catchError(error, TAG, 'deleteAll', res)
     }
   }
 }
