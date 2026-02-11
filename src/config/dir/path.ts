@@ -52,6 +52,7 @@ export const PATH_PARAM = {
   REQUEST          : 'request',
   SEED             : 'seed',
   SELECT           : 'select',
+  SELECT_TEAM      : 'select-team',
   SIM              : 'sim',
   STATS            : 'stats',
   SUGGEST          : 'suggest',
