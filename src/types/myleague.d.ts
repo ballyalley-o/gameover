@@ -1,8 +1,8 @@
-declare type MyLeagueFilter = {
+declare type MyLeagueFilterType = {
   name?: string
 }
 
-declare type MyLeagueTeamFilter = {
+declare type MyLeagueTeamFilterType = {
   name?: string
   key ?: string
   city?: string
