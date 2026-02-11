@@ -44,7 +44,10 @@ export class MyLeagueTeamController {
             }
             const { myLeagueId, myLeagueTeamId } = req.params
 
-            if (!myLeagueId || !myLeagueTeamId) throw new ErrorResponse(transl('error.no_id'), CODE.BAD_REQUEST)
+            if (!myLeagueId || !myLeagueTeamId) {
+                throw new ErrorResponse(transl('error.no_id'), CODE.BAD_REQUEST)
+            }
+
             const myLeagueTeam = await myLeagueTeamService.get(myLeagueId, myLeagueTeamId)
             res.status(CODE.OK).send(Resp.Ok(myLeagueTeam))
         } catch (error) {
@@ -54,9 +57,9 @@ export class MyLeagueTeamController {
 
     static async selectTeam(req: Request, res: Response) {
         try {
-            const actorUserId                 = req.user?.id
-            const { myLeagueId }              = req.params
-            const { myLeagueTeamId, teamKey } = (typeof req.body === 'object' && req.body) ? req.body : {}
+            const actorUserId                    = req.user?.id
+            const { myLeagueId, myLeagueTeamId } = req.params
+            const { teamKey }    = (typeof req.body === 'object' && req.body) ? req.body : {}
 
             if (!actorUserId || !myLeagueTeamId) {
                 return Service.invalid(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
