@@ -15,7 +15,7 @@ router
     .route(combinePathParam(PATH_PARAM.MY_LEAGUE_ID))
     .get(protect, authorize('admin'), MyLeagueController.get)
     .put(protect, MyLeagueController.updateMyLeague)
-    .delete(protect, MyLeagueController.deleteMyLeagueById)
+    .delete(protect, MyLeagueController.removeMyLeagueById)
 
 router.post(combinePathParam(PATH_PARAM.MY_LEAGUE_ID, PATH_PARAM.DRAFT), MyLeagueController.draft)
 
