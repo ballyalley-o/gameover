@@ -100,18 +100,16 @@ export const myLeagueTeamService = {
 
     async get(myLeagueId: string, myLeagueTeamId: string) {
         try {
-            if (!myLeagueId || myLeagueTeamId) {
+            if (!myLeagueId || !myLeagueTeamId) {
                 throw new ErrorResponse(transl('error.no_id'), CODE.BAD_REQUEST)
             }
 
             const myLeague = await ensureLeague(myLeagueId)
-
             if (!myLeague) {
                 throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
             }
 
-            const [myLeagueTeam] = await db.select().from(myLeagueTeams).where(and(eq(myLeagueTeams.id, myLeagueId), eq(myLeagueTeams.id, myLeagueTeamId)))
-
+            const [myLeagueTeam] = await db.select().from(myLeagueTeams).where(and(eq(myLeagueTeams.leagueId, myLeagueId), eq(myLeagueTeams.id, myLeagueTeamId)))
             if (!myLeagueTeam) {
                 throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
             }
@@ -199,11 +197,11 @@ export const myLeagueTeamService = {
             }
             const { isOwner, isAdmin } = await ensureMyLeagueOwnerOrAdmin(user.id)
 
-            if (!isOwner || !isAdmin) {
+            if ((teamToRemove.ownerUserId !== null || !isOwner) && !isAdmin) {
                 throw new ErrorResponse(RESPONSE.ERROR[403], CODE.UNAUTHORIZED)
             }
 
-            await db.delete(myLeagueTeams).where(eq(myLeagueTeams.ownerUserId, user.id))
+            await db.delete(myLeagueTeams).where(eq(myLeagueTeams.id, myLeagueTeamId))
         } catch (error) {
             if (error instanceof Error) {
                 throw new ErrorResponse(error.message, CODE.INTERNAL_SERVER_ERROR)
