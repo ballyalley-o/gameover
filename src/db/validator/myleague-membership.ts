@@ -8,8 +8,9 @@ const sourceEnum = z.enum(['invite', 'request', 'system'])
 
 export const myLeagueMembershipSelectSchema = createSelectSchema(myLeagueMembership)
 export const myLeagueMembershipInsertSchema = createInsertSchema(myLeagueMembership, {
-  role  : roleEnum.default('member'),
-  status: statusEnum.default('pending'),
-  source: sourceEnum.default('system'),
+  role     : roleEnum.default('member'),
+  status   : statusEnum.default('pending'),
+  source   : sourceEnum.default('system'),
+  expiresAt: () => z.coerce.date().optional(),
 })
 export const myLeagueMembershipUpdateSchema = myLeagueMembershipInsertSchema.partial()
