@@ -1,0 +1,1 @@
+ALTER TABLE "my_league_memberships" ADD COLUMN "expires_at" timestamp;

@@ -141,6 +141,20 @@
       "when": 1769960465466,
       "tag": "0019_myleague-memberships-username",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1770857874421,
+      "tag": "0020_myleague-draftdate-seasonstart-date-added",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1770910908058,
+      "tag": "0021_myleague-expire-at",
+      "breakpoints": true
     }
   ]
 }
