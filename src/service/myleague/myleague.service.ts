@@ -84,7 +84,7 @@ export const myLeagueService = {
     }
   },
 
-  async list(user: Pick<DrizzleUser, 'id' | 'role'>, filters: MyLeagueFilter = {}): Promise<DrizzleMyLeague[]> {
+  async list(user: Pick<DrizzleUser, 'id' | 'role'>, filters: MyLeagueFilterType = {}): Promise<DrizzleMyLeague[]> {
     try {
       const conditions = [] as any[]
       const isAdmin    = (user as any)?.role === 'admin'
