@@ -29,7 +29,9 @@ export const es = {
     "team_already_selected": "Equipo ya seleccionado",
     "cpu_cannot_be_selected": "No se puede seleccionar el equipo de CPU",
     "team_has_already_selected": "{field} ya ha sido seleccionado",
-    "max_count_per_myleague": "Máximo de {count} equipos por myleague"
+    "max_count_per_myleague": "Máximo de {count} equipos por myleague",
+    "user_select_team_required": "Todos los miembros deben seleccionar un equipo antes de redactar",
+    "league_sched_before_invite": "Se debe fijar el calendario de la liga antes de invitar"
   },
   "validation": {
     "default": {
@@ -43,6 +45,9 @@ export const es = {
     "max_league_allowed_user": "Se alcanzó el límite máximo ({max}) permitido para las ligas de propiedad."
   },
   "message": {
-    "owner_no_myleague": "No se ha creado ninguna MyLeague"
+    "owner_no_myleague": "No se ha creado ninguna MyLeague",
+    "membership_expired": "Membresía caducada",
+    "membership_processed": "Membresía ya procesada",
+    "draft_started": "La fecha del draft ya comenzó"
   }
 } as const
