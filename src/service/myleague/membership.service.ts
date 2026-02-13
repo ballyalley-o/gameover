@@ -1,4 +1,5 @@
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNotNull, isNull, lte, sql } from 'drizzle-orm'
+import type { SelectedFields } from 'drizzle-orm'
 import { db } from 'gameover'
 import { ErrorResponse } from 'middleware'
 import { CODE, RESPONSE } from 'constant'
@@ -39,12 +40,35 @@ const _ensureCapacity = async (leagueId: string, maxUser?: number | null) => {
   }
 }
 
+const _getMembershipExpiry = (league: { draftStartAt?: Date | null, seasonStartAt?: Date | null }) => {
+  if (!league.draftStartAt || !league.seasonStartAt) {
+    throw new ErrorResponse(transl('error.league_sched_before_invite'), CODE.BAD_REQUEST)
+  }
+  const now = new Date()
+  if (league.draftStartAt <= now) {
+    throw new ErrorResponse(transl('message.draft_started'), CODE.BAD_REQUEST)
+  }
+  return league.draftStartAt
+}
+
+const _expirePending = async (leagueId?: string) => {
+  const now = new Date()
+  const conditions = [
+    eq(myLeagueMembership.status, 'pending'),
+    isNotNull(myLeagueMembership.expiresAt),
+    lte(myLeagueMembership.expiresAt, now),
+  ]
+  if (leagueId) conditions.push(eq(myLeagueMembership.leagueId, leagueId))
+  await db.update(myLeagueMembership).set({ status: 'expired', updatedAt: now }).where(and(...conditions))
+}
+
 export const myLeagueMembershipService = {
   async getMemberAll(myLeagueId: string, actorUserId: string, status: MyLeagueMembershipStatus = 'accepted') {
     if (!myLeagueId || !actorUserId) {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
+    await _expirePending(myLeagueId)
     const league  = await ensureLeague(myLeagueId)
     const isOwner = league.ownerUserId === actorUserId
 
@@ -96,12 +120,14 @@ export const myLeagueMembershipService = {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
+    await _expirePending(leagueId)
     const league = await ensureLeague(leagueId)
     if (league.ownerUserId !== ownerUserId) {
       throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
     }
 
     await _ensureCapacity(leagueId, league.maxUser)
+    const expiresAt = _getMembershipExpiry(league)
 
     const [existing] = await db
       .select({ id: myLeagueMembership.id, status: myLeagueMembership.status })
@@ -112,7 +138,7 @@ export const myLeagueMembershipService = {
       if (existing.status === 'declined' || existing.status === 'expired') {
         const [updated] = await db
           .update(myLeagueMembership)
-          .set({ status: 'pending', source: 'invite', updatedAt: new Date() })
+          .set({ status: 'pending', source: 'invite', expiresAt, updatedAt: new Date() })
           .where(eq(myLeagueMembership.id, existing.id))
           .returning()
         return updated
@@ -128,6 +154,7 @@ export const myLeagueMembershipService = {
         role  : 'member',
         status: 'pending',
         source: 'invite',
+        expiresAt,
       })
       .returning()
 
@@ -139,12 +166,14 @@ export const myLeagueMembershipService = {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
+    await _expirePending(leagueId)
     const league = await ensureLeague(leagueId)
     if (league.isPrivate) {
       throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
     }
 
     await _ensureCapacity(leagueId, league.maxUser)
+    const expiresAt = _getMembershipExpiry(league)
 
     const [existing] = await db
       .select({ id: myLeagueMembership.id, status: myLeagueMembership.status })
@@ -155,7 +184,7 @@ export const myLeagueMembershipService = {
       if (existing.status === 'declined' || existing.status === 'expired') {
         const [updated] = await db
           .update(myLeagueMembership)
-          .set({ status: 'pending', source: 'request', updatedAt: new Date() })
+          .set({ status: 'pending', source: 'request', expiresAt, updatedAt: new Date() })
           .where(eq(myLeagueMembership.id, existing.id))
           .returning()
         return updated
@@ -170,7 +199,8 @@ export const myLeagueMembershipService = {
         userId,
         role  : 'member',
         status: 'pending',
-        source: 'request'
+        source: 'request',
+        expiresAt,
       })
       .returning()
 
@@ -182,6 +212,7 @@ export const myLeagueMembershipService = {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
+    await _expirePending(leagueId)
     const league = await ensureLeague(leagueId)
     if (league.ownerUserId !== actorUserId) {
       throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
@@ -202,11 +233,12 @@ export const myLeagueMembershipService = {
 
     const [membership] = await db
       .select({
-        id      : myLeagueMembership.id,
-        userId  : myLeagueMembership.userId,
-        source  : myLeagueMembership.source,
-        status  : myLeagueMembership.status,
-        leagueId: myLeagueMembership.leagueId,
+        id       : myLeagueMembership.id,
+        userId   : myLeagueMembership.userId,
+        source   : myLeagueMembership.source,
+        status   : myLeagueMembership.status,
+        expiresAt: myLeagueMembership.expiresAt,
+        leagueId : myLeagueMembership.leagueId,
       })
       .from(myLeagueMembership)
       .where(and(eq(myLeagueMembership.id, membershipId), eq(myLeagueMembership.leagueId, leagueId)))
@@ -215,8 +247,18 @@ export const myLeagueMembershipService = {
       throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
     }
 
+    const now = new Date()
+    if (membership.status === 'pending' && membership.expiresAt && membership.expiresAt <= now) {
+      await db.update(myLeagueMembership).set({ status: 'expired', updatedAt: now }).where(eq(myLeagueMembership.id, membership.id))
+      throw new ErrorResponse(transl('message.membership_expired'), CODE.CONFLICT)
+    }
+
+    if (membership.status === 'expired') {
+      throw new ErrorResponse(transl('message.membership_expired'), CODE.CONFLICT)
+    }
+
     if (membership.status !== 'pending') {
-      throw new ErrorResponse('Membership already processed', CODE.CONFLICT)
+      throw new ErrorResponse(transl('message.membership_processed'), CODE.CONFLICT)
     }
 
     const league   = await ensureLeague(leagueId)
@@ -243,5 +285,9 @@ export const myLeagueMembershipService = {
       .returning()
 
     return updated
+  },
+
+  async expirePending(leagueId?: string) {
+    await _expirePending(leagueId)
   }
 }
