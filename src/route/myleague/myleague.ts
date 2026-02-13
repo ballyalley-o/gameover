@@ -13,7 +13,7 @@ router
 
 router
     .route(combinePathParam(PATH_PARAM.MY_LEAGUE_ID))
-    .get(protect, authorize('admin'), MyLeagueController.get)
+    .get(protect, MyLeagueController.get)
     .put(protect, MyLeagueController.updateMyLeague)
     .delete(protect, MyLeagueController.removeMyLeagueById)
 
