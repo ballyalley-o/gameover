@@ -206,6 +206,7 @@ export const myLeagueMembership = pgTable('my_league_memberships', {
   role     : myLeagueRoleEnum('role').notNull().default('member'),
   status   : membershipStatusEnum('status').notNull().default('pending'),
   source   : sourceEnum('source').notNull().default('system'),
+  expiresAt: timestamp('expires_at', { withTimezone: false, mode: 'date' }),
   createdAt: timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
