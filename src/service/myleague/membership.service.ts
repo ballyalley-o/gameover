@@ -5,13 +5,16 @@ import { CODE, RESPONSE } from 'constant'
 import { myLeagues, myLeagueMembership, myLeagueTeams, users } from 'db/schema'
 import { transl } from 'utility'
 
-export const ensureLeague = async (myLeagueId: string) => {
+export async function ensureLeague<T extends SelectedFields<any, any> = {}>(myLeagueId: string, extendSelect?: T) {
   const [league] = await db
     .select({
-      id         : myLeagues.id,
-      ownerUserId: myLeagues.ownerUserId,
-      isPrivate  : myLeagues.isPrivate,
-      maxUser    : myLeagues.maxUser,
+      id           : myLeagues.id,
+      ownerUserId  : myLeagues.ownerUserId,
+      isPrivate    : myLeagues.isPrivate,
+      maxUser      : myLeagues.maxUser,
+      draftStartAt : myLeagues.draftStartAt,
+      seasonStartAt: myLeagues.seasonStartAt,
+      ...(extendSelect ?? {})
     })
     .from(myLeagues)
     .where(eq(myLeagues.id, myLeagueId))
