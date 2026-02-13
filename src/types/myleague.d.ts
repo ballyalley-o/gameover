@@ -17,6 +17,8 @@ declare type CreateMyLeaguePayloadType = {
   name             : string
   ownerUserId     ?: string
   isPrivate       ?: boolean
+  draftStartAt    ?: string | Date
+  seasonStartAt   ?: string | Date
   includeBaseTeams?: boolean
   teamCount       ?: number
   ownerTeam       ?: OwnerTeamInputType
@@ -38,6 +40,7 @@ declare type DraftPlayerType = {
   isStar   : boolean
 }
 
+declare type MyLeagueStatusType           = 'pending' | 'active' | 'locked' | 'finished'
 declare type MyLeagueMembershipRole       = 'owner' | 'member'
 declare type MyLeagueMembershipStatus     = 'pending' | 'accepted' | 'declined' | 'expired'
 declare type MyLeagueMembershipSource     = 'invite' | 'request' | 'system'
