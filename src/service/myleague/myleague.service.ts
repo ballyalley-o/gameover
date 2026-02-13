@@ -1,6 +1,6 @@
 import { db, GLOBAL } from 'gameover'
-import { and, eq, ilike, or, sql } from 'drizzle-orm'
-import { myLeagues, myLeagueMembership, myLeaguePlayers, myLeagueRosters, myLeagueTeams, players, teams } from 'db/schema'
+import { and, eq, getTableColumns, ilike, isNull, or, sql } from 'drizzle-orm'
+import { myLeagues, myLeagueMembership, myLeaguePlayers, myLeagueRosters, myLeagueTeams, players, teams, users } from 'db/schema'
 import { ErrorResponse } from 'middleware'
 import type { DrizzleMyLeague, DrizzleUser, NewDrizzleMyLeague } from 'types/schema'
 import { CODE, RESPONSE } from 'constant'
@@ -36,6 +36,30 @@ const _resolveTargets = (options: DraftOptionType) => {
     acc[pos] = Math.max(0, Math.floor(overrides[pos] ?? DEFAULT_TARGETS[pos]))
     return acc
   }, {} as Record<PlayerPositionType, number>)
+}
+
+const _coerceDate = (value?: string | Date | null) => {
+  if (value === undefined) return undefined
+  if (value === null) return null
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    throw new ErrorResponse(transl('error.invalie_date_format'), CODE.BAD_REQUEST)
+  }
+  return date
+}
+
+const _validateSchedule = (draftStartAt?: Date | null, seasonStartAt?: Date | null) => {
+  if (draftStartAt && seasonStartAt && draftStartAt > seasonStartAt) {
+    throw new ErrorResponse('Draft start date must be before season start date', CODE.BAD_REQUEST)
+  }
+}
+
+const _deriveStatus = (draftStartAt?: Date | null, seasonStartAt?: Date | null, currentStatus?: MyLeagueStatusType) => {
+  if (currentStatus === 'finished') return currentStatus
+  const now = new Date()
+  if (seasonStartAt && now >= seasonStartAt) return 'active'
+  if (draftStartAt && now >= draftStartAt) return 'locked'
+  return 'pending'
 }
 
 const _pickPlayer = (
@@ -103,12 +127,14 @@ export const myLeagueService = {
             json_build_object(
               'userId', ${users.id},
               'firstname', ${users.firstname},
-              'lastname', ${users.lastname},
               'username', ${users.username},
-              'email', ${users.email},
+              'email', ${users.email}
             )
           ) filter (where ${myLeagueMembership.status} = 'accepted')
         `.as('members'),
+        memberCount: sql`
+          count(*) filter (where ${myLeagueMembership.status} = 'accepted')
+        `.as('memberCount'),
       })
         .from(myLeagueMembership)
         .leftJoin(users, eq(myLeagueMembership.userId, users.id))
@@ -117,7 +143,11 @@ export const myLeagueService = {
 
       const where = conditions.length ? and(...conditions) : undefined
 
-      return await db.select({ ...getTableColumns(myLeagues), members: memberAgg.members }).from(myLeagues).leftJoin(memberAgg, eq(memberAgg.myLeagueId, myLeagues.id)).where(where)
+      return await db
+        .select({ ...getTableColumns(myLeagues), memberCount: memberAgg.memberCount, members: memberAgg.members })
+        .from(myLeagues)
+        .leftJoin(memberAgg, eq(memberAgg.myLeagueId, myLeagues.id))
+        .where(where)
     } catch (error) {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
@@ -141,7 +171,16 @@ export const myLeagueService = {
   },
 
   async create(payload: CreateMyLeaguePayloadType) {
-    const { name, isPrivate, includeBaseTeams = true, teamCount, ownerTeam, ownerUserId } = payload
+    const {
+      name,
+      isPrivate,
+      includeBaseTeams = true,
+      teamCount,
+      ownerTeam,
+      ownerUserId,
+      draftStartAt,
+      seasonStartAt,
+    } = payload
     if (!name) {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
@@ -150,7 +189,16 @@ export const myLeagueService = {
       throw new ErrorResponse(RESPONSE.ERROR[422], CODE.UNPROCESSABLE_ENTITY)
     }
 
-    const [league] = await db.insert(myLeagues).values({ name, ownerUserId, isPrivate }).returning()
+    const draftDate  = _coerceDate(draftStartAt)
+    const seasonDate = _coerceDate(seasonStartAt)
+    _validateSchedule(draftDate, seasonDate)
+
+    const status = _deriveStatus(draftDate ?? undefined, seasonDate ?? undefined)
+
+    const [league] = await db
+        .insert(myLeagues)
+        .values({ name, ownerUserId, isPrivate, draftStartAt: draftDate, seasonStartAt: seasonDate, status })
+        .returning()
 
     if (ownerUserId) {
       await db
@@ -329,10 +377,23 @@ export const myLeagueService = {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
 
-    const existingMyLeague = await db.select({ id: myLeagues.id }).from(myLeagues).where(eq(myLeagues.id, myLeagueId))
+    const [existingMyLeague] = await db.select({ id: myLeagues.id, draftStartAt: myLeagues.draftStartAt, seasonStartAt: myLeagues.seasonStartAt, status: myLeagues.status }).from(myLeagues).where(eq(myLeagues.id, myLeagueId))
     if (!existingMyLeague) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
 
-    const [updatedMyLeague] = await db.update(myLeagues).set({ ...data }).where(eq(myLeagues.id, myLeagueId)).returning()
+    const draftDate       = _coerceDate(data.draftStartAt as string | Date | null | undefined)
+    const seasonDate      = _coerceDate(data.seasonStartAt as string | Date | null | undefined)
+    const finalDraftDate  = draftDate  === undefined ? existingMyLeague.draftStartAt : draftDate
+    const finalSeasonDate = seasonDate === undefined ? existingMyLeague.seasonStartAt : seasonDate
+    _validateSchedule(finalDraftDate ?? undefined, finalSeasonDate ?? undefined)
+
+    const updates: Partial<NewDrizzleMyLeague> = { ...data }
+    if (draftDate !== undefined) updates.draftStartAt = draftDate as any
+    if (seasonDate !== undefined) updates.seasonStartAt = seasonDate as any
+    if (data.status === undefined && (draftDate !== undefined || seasonDate !== undefined)) {
+      updates.status = _deriveStatus(finalDraftDate ?? undefined, finalSeasonDate ?? undefined, existingMyLeague.status)
+    }
+
+    const [updatedMyLeague] = await db.update(myLeagues).set(updates).where(eq(myLeagues.id, myLeagueId)).returning()
     if (!updatedMyLeague) {
       throw new ErrorResponse(transl('error.failed_update'), CODE.BAD_REQUEST)
     }
@@ -349,6 +410,27 @@ export const myLeagueService = {
 
     if (!leagueTeams.length) {
       throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+    }
+
+    const unassignedMembers = await db
+      .select({ userId: myLeagueMembership.userId })
+      .from(myLeagueMembership)
+      .leftJoin(
+        myLeagueTeams,
+        and(
+          eq(myLeagueTeams.leagueId, myLeagueMembership.leagueId),
+          eq(myLeagueTeams.ownerUserId, myLeagueMembership.userId)
+        )
+      )
+      .where(and(
+        eq(myLeagueMembership.leagueId, leagueId),
+        eq(myLeagueMembership.status, 'accepted'),
+        isNull(myLeagueTeams.id)
+      ))
+
+    // any invitation that is pending will be deleted when draft starts
+    if (unassignedMembers.length) {
+      throw new ErrorResponse(transl('error.user_select_team_required'), CODE.UNPROCESSABLE_ENTITY)
     }
 
     if (leagueTeams.length > MAX_TEAMS_PER_LEAGUE) {
@@ -486,14 +568,32 @@ export const myLeagueService = {
         throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
       }
 
-      const [myLeagueExist] = await db.select({ id: myLeagues.id }).from(myLeagues).where(eq(myLeagues.id, myLeagueId))
+      const [myLeagueExist] = await db.select({ id: myLeagues.id, draftStartAt: myLeagues.draftStartAt, seasonStartAt: myLeagues.seasonStartAt, status: myLeagues.status }).from(myLeagues).where(eq(myLeagues.id, myLeagueId))
       if (!myLeagueExist) {
         throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
       }
 
       const { id, ownerUserId, createdAt, updatedAt, ...restOfUpdates } = (data ?? {}) as any
-      const cleanUpdates                                                = Object.fromEntries(Object.entries(restOfUpdates).filter(([, v]) => v !== undefined)) as Partial<DrizzleMyLeague>
-      const [updatedMyLeague]                                           = await db.update(myLeagues).set({ ...cleanUpdates, updatedAt: new Date() } as any).where(eq(myLeagues.id, myLeagueId)).returning()
+
+      const draftDate       = _coerceDate(restOfUpdates.draftStartAt)
+      const seasonDate      = _coerceDate(restOfUpdates.seasonStartAt)
+      const finalDraftDate  = draftDate  === undefined ? myLeagueExist.draftStartAt : draftDate
+      const finalSeasonDate = seasonDate === undefined ? myLeagueExist.seasonStartAt : seasonDate
+
+      _validateSchedule(finalDraftDate ?? undefined, finalSeasonDate ?? undefined)
+
+      const cleanUpdates = Object.fromEntries(Object.entries(restOfUpdates).filter(([, v]) => v !== undefined)) as Partial<DrizzleMyLeague>
+      if (draftDate !== undefined) cleanUpdates.draftStartAt = draftDate as any
+      if (seasonDate !== undefined) cleanUpdates.seasonStartAt = seasonDate as any
+      if (restOfUpdates.status === undefined && (draftDate !== undefined || seasonDate !== undefined)) {
+        cleanUpdates.status = _deriveStatus(finalDraftDate ?? undefined, finalSeasonDate ?? undefined, myLeagueExist.status)
+      }
+
+      const [updatedMyLeague] = await db
+        .update(myLeagues)
+        .set({ ...cleanUpdates, updatedAt: new Date() } as any)
+        .where(eq(myLeagues.id, myLeagueId))
+        .returning()
 
       if (!updatedMyLeague) {
         throw new ErrorResponse(RESPONSE.ERROR.FAILED_FIND, CODE.NOT_FOUND)
