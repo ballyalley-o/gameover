@@ -96,9 +96,28 @@ export const myLeagueService = {
         conditions.push(ilike(myLeagues.name, `%${filters.name}%`))
       }
 
+      const memberAgg = db.select({
+        myLeagueId: myLeagueMembership.leagueId,
+        members: sql`
+          json_agg(
+            json_build_object(
+              'userId', ${users.id},
+              'firstname', ${users.firstname},
+              'lastname', ${users.lastname},
+              'username', ${users.username},
+              'email', ${users.email},
+            )
+          ) filter (where ${myLeagueMembership.status} = 'accepted')
+        `.as('members'),
+      })
+        .from(myLeagueMembership)
+        .leftJoin(users, eq(myLeagueMembership.userId, users.id))
+        .groupBy(myLeagueMembership.leagueId)
+        .as('memberAgg')
+
       const where = conditions.length ? and(...conditions) : undefined
 
-      return await db.select().from(myLeagues).where(where)
+      return await db.select({ ...getTableColumns(myLeagues), members: memberAgg.members }).from(myLeagues).leftJoin(memberAgg, eq(memberAgg.myLeagueId, myLeagues.id)).where(where)
     } catch (error) {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
