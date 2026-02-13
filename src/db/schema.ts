@@ -111,14 +111,16 @@ export const rosters = pgTable('rosters', {
 }))
 
 export const myLeagues = pgTable('my_leagues', {
-  id         : uuid('id').defaultRandom().primaryKey(),
-  name       : varchar('name', { length: 255 }).notNull().unique(),
-  ownerUserId: uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
-  isPrivate  : boolean('is_private').notNull().default(true),
-  status     : myLeagueStatusEnum('status').notNull().default('pending'),
-  createdAt  : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
-  maxUser    : smallint('max_user'),
-  updatedAt  : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+  id           : uuid('id').defaultRandom().primaryKey(),
+  name         : varchar('name', { length: 255 }).notNull().unique(),
+  ownerUserId  : uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
+  isPrivate    : boolean('is_private').notNull().default(true),
+  status       : myLeagueStatusEnum('status').notNull().default('pending'),
+  draftStartAt : timestamp('draft_start_at', { withTimezone: false, mode: 'date' }),
+  seasonStartAt: timestamp('season_start_at', { withTimezone: false, mode: 'date' }),
+  createdAt    : timestamp('created_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow(),
+  maxUser      : smallint('max_user'),
+  updatedAt    : timestamp('updated_at', { withTimezone: false, mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
   ownerIdx: index('idx_my_leagues_owner').on(table.ownerUserId),
 }))
