@@ -68,16 +68,13 @@ export const myLeagueTeamService = {
         throw new ErrorResponse(transl('error.no_id'), CODE.BAD_REQUEST)
         }
 
-        const { isOwner } = await ensureMyLeagueOwnerOrAdmin(actorUserId)
-        // const isOwner = league.ownerUserId === actorUserId
-
         const [actorMembership] = await db
             .select({ status: myLeagueMembership.status })
             .from(myLeagueMembership)
             .where(and(eq(myLeagueMembership.leagueId, myLeagueId), eq(myLeagueMembership.userId, actorUserId)))
 
-        if (!isOwner && actorMembership?.status) {
-            throw new ErrorResponse(RESPONSE.ERROR[403], CODE.UNAUTHORIZED)
+        if (actorMembership?.status !== 'accepted') {
+            throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
         }
 
         const availableTeams = await db
