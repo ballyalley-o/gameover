@@ -27,7 +27,7 @@ export class MyLeagueTeamController {
             const { myLeagueId } = req.params
 
             if (!actorUserId) {
-                return Service.invalid(RESPONSE.ERROR[403], CODE.UNAUTHORIZED)
+                return Service.invalid(RESPONSE.ERROR[403], CODE.FORBIDDEN)
             }
 
             const teams = await myLeagueTeamService.listAvailableTeamAll(myLeagueId, actorUserId)
