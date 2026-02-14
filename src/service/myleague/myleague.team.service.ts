@@ -15,7 +15,7 @@ export const ensureMyLeagueOwnerOrAdmin = async (userId: string): Promise<{ isAd
     const [myLeague] = await db.select({ id: myLeagues.id, ownerUserId: myLeagues.ownerUserId, role: users.role }).from(myLeagues).leftJoin(users, eq(myLeagues.ownerUserId, users.id)).where(eq(myLeagues.ownerUserId, userId))
 
     if (!myLeague) {
-        throw new ErrorResponse(RESPONSE.ERROR[403], CODE.UNAUTHORIZED)
+        throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
     }
 
     let isAdmin = false
