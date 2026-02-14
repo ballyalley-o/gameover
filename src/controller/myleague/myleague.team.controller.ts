@@ -57,9 +57,9 @@ export class MyLeagueTeamController {
 
     static async selectTeam(req: Request, res: Response) {
         try {
-            const actorUserId                    = req.user?.id
-            const { myLeagueId, myLeagueTeamId } = req.params
-            const { teamKey }    = (typeof req.body === 'object' && req.body) ? req.body : {}
+            const actorUserId                 = req.user?.id
+            const { myLeagueId }              = req.params
+            const { teamKey, myLeagueTeamId } = typeof req.body === 'object' && req.body ? req.body : {}
 
             if (!actorUserId || !myLeagueTeamId) {
                 return Service.invalid(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
