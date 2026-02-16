@@ -31,7 +31,8 @@ export const fr = {
     "team_has_already_selected": "{field} a déjà été sélectionné",
     "max_count_per_myleague": "Max {count} équipes par ma ligue",
     "user_select_team_required": "Tous les membres doivent sélectionner une équipe avant de rédiger",
-    "league_sched_before_invite": "Le calendrier de la ligue doit être établi avant d'inviter"
+    "league_sched_before_invite": "Le calendrier de la ligue doit être établi avant d'inviter",
+    "draft_already_started": "Le brouillon a déjà commencé"
   },
   "validation": {
     "default": {

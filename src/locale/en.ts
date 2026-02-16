@@ -8,6 +8,7 @@ export const en = {
   },
   error: {
     cpu_cannot_be_selected        : 'CPU team cannot be selected',
+    draft_already_started         : 'Draft has already started',
     failed_find                   : 'Failed to find the requested document',
     failed_link_route             : '[mainRoute]: Failed to link Route: {linker}',
     failed_update                 : 'Failed to update this document',
