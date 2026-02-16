@@ -109,8 +109,10 @@ export class MyLeagueController {
   }
   static async draft(req: Request, res: Response) {
     try {
-      const options = typeof req.body === 'object' && req.body ? req.body : {}
-      const result = await myLeagueService.draft(req.params.leagueId, options)
+      const { myLeagueId } = req.params
+      const options        = typeof req.body === 'object' && req.body ? req.body : {}
+      const result         = await myLeagueService.draft(myLeagueId, options)
+
       res.status(CODE.OK).send(Resp.Ok(result))
     } catch (error) {
       Service.catchError(error, TAG, 'draft', res)
@@ -121,6 +123,7 @@ export class MyLeagueController {
     try {
       const { myLeagueId }  = req.params
       const data            = typeof req.body === 'object' && req.body ? req.body : {}
+
       const updatedMyLeague = await myLeagueService.updateMyLeagueById(myLeagueId, data)
       res.status(CODE.OK).send(Resp.Ok(updatedMyLeague))
     } catch (error) {
