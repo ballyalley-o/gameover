@@ -16,7 +16,7 @@ router
     .get(protect, MyLeagueTeamController.get)
     .delete(protect, MyLeagueTeamController.removeTeam)
 
-router.put(combinePathParam(PATH_PARAM.MY_LEAGUE_TEAM_ID, PATH_PARAM.SELECT_TEAM), protect, MyLeagueTeamController.selectTeam)
+router.put(combinePathParam(PATH_PARAM.SELECT), protect, MyLeagueTeamController.selectTeam)
 
 /**
  * @path {apiURL}/myleague/{:myLeagueId}/team/...
