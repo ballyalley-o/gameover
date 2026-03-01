@@ -9,9 +9,9 @@ const TAG = 'MyLeagueRoster.Controller'
 export class MyLeagueRosterController {
   static async list(req: Request, res: Response): Promise<void> {
     try {
-      const userId         = Service.getAuthUserId(req)
+      const userId = Service.getAuthUserId(req)
       const { myLeagueId } = req.params
-      const user           = await Service.getAuthUser(userId ?? '')
+      const user = await Service.getAuthUser(userId ?? '')
 
       if (!user) throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
       const myLeagueRosterAll = await myLeagueRosterService.list(myLeagueId, user)
@@ -52,7 +52,7 @@ export class MyLeagueRosterController {
 
   static async removeRoster(req: Request, res: Response): Promise<void> {
     try {
-      const actorUser                      = req.user
+      const actorUser = req.user
       const { myLeagueId, myLeagueRosterId } = req.params
 
       if (!actorUser) {
