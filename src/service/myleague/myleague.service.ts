@@ -405,6 +405,12 @@ export const myLeagueService = {
     if (!leagueId) {
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
+    // const [myLeague]    = await db.select({ id: myLeagues.id, draftStartAt: myLeagues.draftStartAt, seasonStartAt: myLeagues.seasonStartAt }).from(myLeagues).where(eq(myLeagues.id, leagueId))
+
+    // const now = new Date()
+    // if (myLeague.draftStartAt !== null && myLeague.draftStartAt >= now) {
+    //   throw new ErrorResponse(transl('error.draft_already_started'), CODE.BAD_REQUEST)
+    // }
 
     const leagueTeams = await db.select({ id: myLeagueTeams.id }).from(myLeagueTeams).where(eq(myLeagueTeams.leagueId, leagueId))
 
