@@ -214,6 +214,8 @@ export const myLeagueMembershipService = {
 
     await _expirePending(leagueId)
     const league = await ensureLeague(leagueId)
+    // check if they are the member of the current league
+
     if (league.ownerUserId !== actorUserId) {
       throw new ErrorResponse(RESPONSE.ERROR[403], CODE.FORBIDDEN)
     }
