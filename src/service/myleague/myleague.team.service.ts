@@ -137,7 +137,7 @@ export const myLeagueTeamService = {
         const [existingTeam] = await db
           .select({ id: myLeagueTeams.id })
           .from(myLeagueTeams)
-          .where(and(eq(myLeagueTeams.leagueId, myLeagueId), eq(myLeagueTeams.ownerUserId, actorUserId)))
+          .where(and(eq(myLeagueTeams.leagueId, myLeagueId), eq(myLeagueTeams.key, teamKey), eq(myLeagueTeams.ownerUserId, actorUserId)))
 
         if (existingTeam) {
           throw new ErrorResponse(transl('error.user_has_team'), CODE.CONFLICT)
