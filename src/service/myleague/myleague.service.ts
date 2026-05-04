@@ -155,9 +155,17 @@ export const myLeagueService = {
 
   async getById(myLeagueId: string): Promise<DrizzleMyLeague> {
     try {
-      const [myLeague] = await db.select().from(myLeagues).where(eq(myLeagues.id, myLeagueId))
+      const memberAgg = db.select({ myLeagueId: myLeagueMembership.leagueId, memberCount: sql`count(*) filter (where ${myLeagueMembership.status} = 'accepted')`.as('memberCount') }).from(myLeagueMembership).groupBy(myLeagueMembership.leagueId).as('memberAgg')
+      const [myLeague] = await db.select({ ...getTableColumns(myLeagues), memberCount: memberAgg.memberCount }).from(myLeagues).leftJoin(memberAgg, eq(memberAgg.myLeagueId, myLeagues.id)).where(eq(myLeagues.id, myLeagueId))
+
+      if (!myLeague) {
+        throw new ErrorResponse(RESPONSE.ERROR[404], CODE.NOT_FOUND)
+      }
       return myLeague
     } catch (error) {
+      if (error instanceof ErrorResponse) {
+        throw error
+      }
       throw new ErrorResponse(RESPONSE.ERROR[400], CODE.BAD_REQUEST)
     }
   },
