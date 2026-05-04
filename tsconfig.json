@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
-    "lib"             : ["dom", "dom.iterable", "ESNext"],
-    "target"          : "ESNext",
-    "module"          : "ESNext",
-    "outDir"          : "./dist",
-    "rootDir"         : "./src",
-    "baseUrl"         : "./src",
-    "paths"           : {
+    "module"            : "ESNext",
+    "moduleResolution"  : "node",
+    "lib"               : ["dom", "dom.iterable", "ESNext"],
+    "target"            : "ESNext",
+    "ignoreDeprecations": "6.0",
+    "outDir"            : "./dist",
+    "rootDir"           : "./src",
+    "baseUrl"           : "src",
+    "paths"             : {
       "*"       : ["*"],
       "gameover": ["config/index.ts"],
       "route"   : ["route/index.ts"]
